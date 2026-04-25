@@ -1,0 +1,2 @@
+/Users/humashaikh/StudioProjects/ed_tech/clubship/clubship/android/app/.cxx/Debug/2f351u2l/x86/CMakeFiles/edit_cache.dir
+/Users/humashaikh/StudioProjects/ed_tech/clubship/clubship/android/app/.cxx/Debug/2f351u2l/x86/CMakeFiles/rebuild_cache.dir

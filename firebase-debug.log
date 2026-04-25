@@ -1,0 +1,24 @@
+[debug] [2024-12-18T06:07:04.678Z] ----------------------------------------------------------------------
+[debug] [2024-12-18T06:07:04.679Z] Command:       /opt/homebrew/Cellar/node/21.7.1/bin/node /opt/homebrew/bin/firebase apps:create ios clubship (ios) --bundle-id=com.example.clubship --json --project=clubship-5bec7
+[debug] [2024-12-18T06:07:04.679Z] CLI Version:   13.29.1
+[debug] [2024-12-18T06:07:04.680Z] Platform:      darwin
+[debug] [2024-12-18T06:07:04.680Z] Node Version:  v21.7.1
+[debug] [2024-12-18T06:07:04.680Z] Time:          Wed Dec 18 2024 15:07:04 GMT+0900 (Japan Standard Time)
+[debug] [2024-12-18T06:07:04.680Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-12-18T06:07:04.683Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-12-18T06:07:04.683Z] > authorizing via signed-in user (hum11farheen@gmail.com)
+[info] Create your IOS app in project clubship-5bec7:
+[debug] [2024-12-18T06:07:04.685Z] Checked if tokens are valid: true, expires at: 1734504597081
+[debug] [2024-12-18T06:07:04.685Z] Checked if tokens are valid: true, expires at: 1734504597081
+[debug] [2024-12-18T06:07:04.685Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/clubship-5bec7/iosApps [none]
+[debug] [2024-12-18T06:07:04.685Z] >>> [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/clubship-5bec7/iosApps {"displayName":"clubship (ios)","bundleId":"com.example.clubship"}
+[debug] [2024-12-18T06:07:05.562Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/clubship-5bec7/iosApps 409
+[debug] [2024-12-18T06:07:05.562Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/clubship-5bec7/iosApps {"error":{"code":409,"message":"Requested entity already exists","status":"ALREADY_EXISTS"}}
+[debug] [2024-12-18T06:07:05.562Z] Request to https://firebase.googleapis.com/v1beta1/projects/clubship-5bec7/iosApps had HTTP Error: 409, Requested entity already exists
+[debug] [2024-12-18T06:07:05.677Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/clubship-5bec7/iosApps had HTTP Error: 409, Requested entity already exists
+    at responseToError (/opt/homebrew/lib/node_modules/firebase-tools/lib/responseToError.js:52:12)
+    at RetryOperation._fn (/opt/homebrew/lib/node_modules/firebase-tools/lib/apiv2.js:312:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to create iOS app for project clubship-5bec7. See firebase-debug.log for more info.

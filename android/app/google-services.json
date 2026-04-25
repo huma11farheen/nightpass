@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "797027200682",
+    "project_id": "clubship-5bec7",
+    "storage_bucket": "clubship-5bec7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:797027200682:android:0c1e6c678e6070140c6ad3",
+        "android_client_info": {
+          "package_name": "company.clubship.clubship_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "797027200682-l1hnah33l134tu043srcq53seqp932r3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJp8FOnzdhMUb9-J1Cd80UTO5wq48rFT0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "797027200682-l1hnah33l134tu043srcq53seqp932r3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "797027200682-0qeqlcraqbuvvmjrr853kuj12ei673ae.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.clubship.clubship"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:797027200682:android:318ad1a07e9f6da20c6ad3",
+        "android_client_info": {
+          "package_name": "company.clubship.clubship_business"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "797027200682-l1hnah33l134tu043srcq53seqp932r3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJp8FOnzdhMUb9-J1Cd80UTO5wq48rFT0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "797027200682-l1hnah33l134tu043srcq53seqp932r3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "797027200682-0qeqlcraqbuvvmjrr853kuj12ei673ae.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.clubship.clubship"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

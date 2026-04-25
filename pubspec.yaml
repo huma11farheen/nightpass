@@ -1,0 +1,89 @@
+name: clubship
+description: "A new Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+40
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  cached_network_image:
+  google_nav_bar:
+  qr_flutter:
+  build_runner:
+  json_annotation:
+  freezed:
+  state_notifier:
+  provider:
+  google_fonts: ^6.2.2
+  get_it:
+  shared_preferences:
+  flutter_stripe: ^11.5.0
+  intl:
+  url_launcher:
+  svg_flutter:
+  freezed_annotation: ^2.4.1
+  http:
+  flutter_svg:
+  google_maps_flutter:
+  geolocator: ^13.0.2
+  carousel_slider:
+  firebase_core:
+  firebase_messaging: ^15.1.5
+  flutter_local_notifications: ^18.0.1
+  supabase_flutter: ^2.9.1
+  flutter_dotenv:
+  go_router:
+  dart_openapi_model_gen: ^0.1.7
+  riverpod_annotation:
+  json_serializable: ^6.7.1
+  skeletonizer: ^2.0.1
+  flutter_riverpod:
+  pretty_qr_code:
+  card_swiper: ^3.0.1
+  dots_indicator: ^3.0.0
+  image_picker:
+  cloudinary:
+  shimmer:
+  flutter_native_splash:
+  auto_hide_keyboard: ^1.1.1
+  webview_flutter: ^4.4.2
+  animated_bottom_navigation_bar: ^1.4.0
+  circular_reveal_animation: ^2.0.2
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  riverpod_generator:
+  flutter_launcher_icons:
+
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/banner/
+    - assets/images/category/
+    - assets/images/nav_bar/
+    - assets/icons/
+    - .env.dev
+  fonts:
+    - family: jakarta
+      fonts:
+        - asset: assets/font/jakarta.ttf
+
+flutter_launcher_icons:
+  android: true         # ✅ Enable for Android
+  ios: true             # ✅ Enable for iOS
+  image_path: "assets/icons/logo.png"
+  remove_alpha_ios: true
