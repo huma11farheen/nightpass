@@ -1,4 +1,5 @@
 import 'package:clubship/colors.dart';
+import 'package:clubship/design/brutal.dart';
 import 'package:clubship/widgets/app_icon.dart';
 import 'package:clubship/widgets/cached_image.dart';
 import 'package:flutter/material.dart';
@@ -212,7 +213,7 @@ class _FoldedCornerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFD81B60)
+      ..color = Brutal.magentaDark
       ..style = PaintingStyle.fill;
 
     final path = Path();

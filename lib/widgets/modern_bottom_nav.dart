@@ -1,15 +1,16 @@
-import 'dart:ui';
+import 'package:clubship/design/brutal.dart';
+import 'package:clubship/widgets/app_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:clubship/colors.dart';
-import 'package:clubship/widgets/app_icon.dart';
 
-class ModernBottomNav extends StatefulWidget {
+class ModernBottomNav extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final VoidCallback? onCenterTap;
   final List<BottomNavItem> items;
   final bool isVisible;
+  final BottomNavItem? centerItem;
+  final bool isCenterSelected;
 
   const ModernBottomNav({
     super.key,
@@ -18,198 +19,109 @@ class ModernBottomNav extends StatefulWidget {
     required this.items,
     this.onCenterTap,
     this.isVisible = true,
+    this.centerItem,
+    this.isCenterSelected = false,
   });
 
   @override
-  State<ModernBottomNav> createState() => _ModernBottomNavState();
-}
-
-class _ModernBottomNavState extends State<ModernBottomNav>
-     {
-  // late AnimationController _rippleController;
-  // late AnimationController _discoController;
-  // late Animation<double> _scaleAnimation;
-  // late Animation<double> _rotationAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    // _rippleController = AnimationController(
-    //   duration: const Duration(milliseconds: 400),
-    //   vsync: this,
-    // );
-    // _discoController = AnimationController(
-    //   duration: const Duration(seconds: 10),
-    //   vsync: this,
-    // );
-    //
-    // _scaleAnimation = Tween<double>(
-    //   begin: 0.0,
-    //   end: 1.0,
-    // ).animate(CurvedAnimation(
-    //   parent: _rippleController,
-    //   curve: Curves.elasticOut,
-    // ));
-    //
-    // _rotationAnimation = Tween<double>(
-    //   begin: 0.0,
-    //   end: 1.0,
-    // ).animate(CurvedAnimation(
-    //   parent: _discoController,
-    //   curve: Curves.linear,
-    // ));
-    //
-    // // Start subtle disco animation
-    // _discoController.repeat();
-  }
-
-  @override
-  void dispose() {
-    // _rippleController.dispose();
-    // _discoController.dispose();
-    super.dispose();
-  }
-
-  void _onItemTap(int index) {
-    HapticFeedback.lightImpact();
-    // _rippleController.forward().then((_) {
-    //   _rippleController.reverse();
-    // });
-    widget.onTap(index);
-  }
-
-  void _onCenterTap() {
-    HapticFeedback.mediumImpact();
-    // _rippleController.forward().then((_) {
-    //   _rippleController.reverse();
-    // });
-    widget.onCenterTap?.call();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-      height: 85,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: ColorPallete.brightPink.withOpacity(0.15),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1A1A2E).withOpacity(0.95),
-                const Color(0xFF16213E).withOpacity(0.9),
-                ColorPallete.cardColor.withOpacity(0.85),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1.5,
-            ),
-          ),
+      color: Brutal.surface,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top hairline
+          Container(height: 1, color: Brutal.hairlineColor),
+
+          // Nav row
+          SizedBox(
+            height: 64,
             child: Row(
               children: [
-                // Left section (2 items)
-                Expanded(
-                  flex: 2,
-                  child: Row(
-                    children: [
-                      _buildNavItem(0),
-                      _buildNavItem(1),
-                    ],
-                  ),
+                _NavItem(index: 0, item: items[0], isSelected: currentIndex == 0, onTap: onTap),
+                _NavItem(index: 1, item: items[1], isSelected: currentIndex == 1, onTap: onTap),
+                _CenterItem(
+                  isSelected: isCenterSelected,
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    onCenterTap?.call();
+                  },
                 ),
-                // Center FAB
-                _buildCenterFAB(),
-                // Right section (2 items)
-                Expanded(
-                  flex: 2,
-                  child: Row(
-                    children: [
-                      _buildNavItem(2),
-                      _buildNavItem(3),
-                    ],
-                  ),
-                ),
+                _NavItem(index: 2, item: items[2], isSelected: currentIndex == 2, onTap: onTap),
+                _NavItem(index: 3, item: items[3], isSelected: currentIndex == 3, onTap: onTap),
               ],
             ),
-        ),
+          ),
+
+          // System nav inset
+          SizedBox(height: bottomInset),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildNavItem(int index) {
-    final isSelected = index == widget.currentIndex;
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.index,
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final int index;
+  final BottomNavItem item;
+  final bool isSelected;
+  final Function(int) onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
-        onTap: () => _onItemTap(index),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 6),
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: isSelected
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      ColorPallete.brightPink.withOpacity(0.2),
-                      ColorPallete.backgroundcolor2.withOpacity(0.1),
-                    ],
-                  )
-                : null,
-            border: isSelected
-                ? Border.all(
-                    color: ColorPallete.brightPink.withOpacity(0.3),
-                    width: 1,
-                  )
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap(index);
+        },
+        child: SizedBox(
+          height: 64,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.all(1),
-                  child: widget.items[index].icon,
+              // Active top bar
+              if (isSelected)
+                Positioned(
+                  top: 0,
+                  left: 12,
+                  right: 12,
+                  child: Container(height: 2, color: Brutal.magenta),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Flexible(
-                child: Text(
-                  widget.items[index].label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isSelected ? ColorPallete.brightPink : Colors.white60,
-                    fontSize: isSelected ? 10 : 9,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    letterSpacing: 0.3,
-                    height: 1.0,
+
+              // Icon + label
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      key: ValueKey(isSelected),
+                      isSelected ? item.selectedIcon : item.icon,
+                      size: 22,
+                      color: isSelected ? Brutal.magenta : Brutal.mute,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.label.toUpperCase(),
+                    style: Brutal.label(
+                      size: 10,
+                      color: isSelected ? Brutal.magenta : Brutal.mute,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -217,73 +129,76 @@ class _ModernBottomNavState extends State<ModernBottomNav>
       ),
     );
   }
+}
 
-  Widget _buildCenterFAB() {
-    return Container(
-      width: 64,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: _onCenterTap,
-            child: Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: ColorPallete.brightPink.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 1),
-                    spreadRadius: 0,
-                  ),
-                ],
-                border: Border.all(
-                  color: ColorPallete.brightPink.withOpacity(0.1),
-                  width: 1,
-                ),
+class _CenterItem extends StatelessWidget {
+  const _CenterItem({required this.isSelected, required this.onTap});
+
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: 72,
+        height: 64,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Active top bar
+            if (isSelected)
+              Positioned(
+                top: 0,
+                left: 8,
+                right: 8,
+                child: Container(height: 2, color: Brutal.magenta),
               ),
-              child: Center(
-                child: AppIcons.logo(
-                  size: 28,
-                  color: ColorPallete.brightPink.withOpacity(0.8),
+
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Square ticket icon — elevated when selected
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 40,
+                  height: 40,
+                  color: isSelected ? Brutal.magenta : Brutal.elevated,
+                  child: Center(
+                    child: AppIcons.logo(
+                      size: 20,
+                      color: isSelected ? Brutal.paper : Brutal.mute,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  'TICKETS',
+                  style: Brutal.label(
+                    size: 8,
+                    color: isSelected ? Brutal.magenta : Brutal.mute,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Tickets',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-              height: 1.0,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class BottomNavItem {
-  final Widget icon;
+  final IconData icon;
+  final IconData selectedIcon;
   final String label;
 
   const BottomNavItem({
     required this.icon,
     required this.label,
-  });
+    IconData? selectedIcon,
+  }) : selectedIcon = selectedIcon ?? icon;
 }

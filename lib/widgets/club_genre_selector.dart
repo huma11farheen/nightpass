@@ -1,4 +1,4 @@
-import 'package:clubship/colors.dart';
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 
 class ClubGenreSelector extends StatefulWidget {
@@ -25,10 +25,10 @@ class _ClubGenreSelectorState extends State<ClubGenreSelector> {
     super.initState();
     selectedGenres = List<String>.from(widget.selectedGenres);
   }
+
   @override
   void didUpdateWidget(covariant ClubGenreSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Update local state when widget.selectedTags changes
     if (widget.selectedGenres != oldWidget.selectedGenres) {
       setState(() {
         selectedGenres = List<String>.from(widget.selectedGenres);
@@ -72,29 +72,35 @@ class _ClubGenreSelectorState extends State<ClubGenreSelector> {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> displayedGenres = widget.isEditable ? clubGenres : selectedGenres.toList();
+    final List<String> displayedGenres =
+        widget.isEditable ? clubGenres : selectedGenres.toList();
 
     return Wrap(
-      spacing: 8.0,
-      runSpacing: 8.0,
+      spacing: 6.0,
+      runSpacing: 6.0,
       children: displayedGenres.map((genre) {
         final isSelected = selectedGenres.contains(genre);
-        return ChoiceChip(
-          showCheckmark: false,
-          label: Text(
-            genre,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-              fontWeight: FontWeight.bold,
+        return GestureDetector(
+          onTap: widget.isEditable ? () => _toggleSelection(genre) : null,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Brutal.magenta.withValues(alpha: 0.15)
+                  : Brutal.elevated,
+              border: Border.all(
+                color: isSelected ? Brutal.magenta : Brutal.hairlineColor,
+                width: isSelected ? 1.5 : 1.0,
+              ),
+            ),
+            child: Text(
+              genre,
+              style: Brutal.label(
+                size: 11,
+                color: isSelected ? Brutal.magenta : Brutal.dim,
+              ),
             ),
           ),
-          selected: isSelected,
-          selectedColor: ColorPallete.cardColor,
-          backgroundColor: Colors.grey[300],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          onSelected: widget.isEditable ? (_) => _toggleSelection(genre) : (_){},
         );
       }).toList(),
     );

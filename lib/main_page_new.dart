@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'dart:io';
 import 'dart:ui';
 
@@ -174,12 +175,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               const SizedBox(height: 24),
 
               // Category Selector
-              CategorySelector(
-                onTap: (category) {
-                  // Category filtering will be handled by the events list below
-                },
-                onCategorySelected: _scrollToEvents,
-              ),
+              // CategorySelector(
+              //   onTap: (category) {
+              //     // Category filtering will be handled by the events list below
+              //   },
+              //   onCategorySelected: _scrollToEvents,
+              // ),
               const SizedBox(height: 18),
 
               Container(
@@ -326,7 +327,7 @@ class _PremiumHeader extends ConsumerWidget {
                           gradient: LinearGradient(
                             colors: [
                               ColorPallete.brightPink,
-                              Colors.purple,
+                              Brutal.magenta,
                             ],
                           ),
                           boxShadow: [
@@ -465,7 +466,7 @@ class _QuickActionCards extends ConsumerWidget {
             subtitle: 'View tickets',
             gradient: LinearGradient(
               colors: [
-                Colors.purple.withValues(alpha: 0.3),
+                Brutal.magenta.withValues(alpha: 0.3),
                 Colors.blue.withValues(alpha: 0.3),
               ],
             ),

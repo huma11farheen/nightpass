@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 import 'package:clubship/colors.dart';
 
@@ -194,7 +195,7 @@ class ModernNavIcons {
       child: ShaderMask(
         shaderCallback: (bounds) => LinearGradient(
           colors: isSelected
-              ? [ColorPallete.brightPink, const Color(0xFFE91E63)]
+              ? [ColorPallete.brightPink, Brutal.magenta]
               : [Colors.white60, Colors.white60],
         ).createShader(bounds),
         child: Icon(
@@ -236,7 +237,7 @@ class ModernNavIcons {
       child: ShaderMask(
         shaderCallback: (bounds) => LinearGradient(
           colors: isSelected
-              ? [ColorPallete.brightPink, const Color(0xFFE91E63)]
+              ? [ColorPallete.brightPink, Brutal.magenta]
               : [Colors.white60, Colors.white60],
         ).createShader(bounds),
         child: Icon(

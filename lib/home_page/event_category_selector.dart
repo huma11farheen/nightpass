@@ -1,12 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clubship/colors.dart';
 import 'package:clubship/data/supabase_models/event_category.dart';
 import 'package:clubship/event/providers/get_category_provider.dart';
-import 'package:clubship/utils/helpers.dart';
-import 'package:clubship/utils/typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 EventCategory _allStub() => EventCategory(
     id: 'all',
@@ -46,167 +42,33 @@ class _CategorySelectorState extends ConsumerState<CategorySelector> {
         // Cache sorted categories using useMemoized or simple list
         final allCategories = [_allStub(), ...category]..sort((a, b) => a.order.compareTo(b.order));
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: ColorPallete.brightPink,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Filter by Category',
-                    style: Theme.of(context).labelLarge!.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                  ),
-                ],
-              ).pad.bottom.p12,
-
-              // Animated category chips
-              SizedBox(
-                height: 48,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: allCategories.length,
-                  itemBuilder: (context, index) {
-                    final cat = allCategories[index];
-                    final isSelected = selectedCategory?.id == cat.id;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: _AnimatedCategoryChip(
-                        category: cat,
-                        isSelected: isSelected,
-                        onTap: () {
-                          setState(() {
-                            selectedCategory = cat;
-                          });
-                          widget.onTap(cat);
-                          widget.onCategorySelected?.call();
-                        },
-                      ),
-                    );
+        return SizedBox(
+          height: 36,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: allCategories.length,
+            itemBuilder: (context, index) {
+              final cat = allCategories[index];
+              final isSelected = selectedCategory?.id == cat.id;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _AnimatedCategoryChip(
+                  category: cat,
+                  isSelected: isSelected,
+                  onTap: () {
+                    setState(() => selectedCategory = cat);
+                    widget.onTap(cat);
+                    widget.onCategorySelected?.call();
                   },
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
       error: (err, st) => Text(err.toString()),
-      loading: () => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Skeletonizer(
-          effect: ShimmerEffect(
-            baseColor: Colors.grey[800]!,
-            highlightColor: Colors.grey[900]!,
-            duration: const Duration(milliseconds: 800),
-          ),
-          enabled: true,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.yellow,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Loading categories',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ).pad.bottom.p12,
-
-              // Categories skeleton
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: const [
-                    Text(
-                      'All',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '|',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    Text(
-                      'Category 1',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '|',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    Text(
-                      'Category 2',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '|',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    Text(
-                      'Category 3',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      loading: () => const SizedBox(height: 36),
     );
   }
 }
@@ -263,12 +125,12 @@ class _AnimatedCategoryChipState extends State<_AnimatedCategoryChip>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           decoration: BoxDecoration(
             color: widget.isSelected
                 ? ColorPallete.brightPink
                 : ColorPallete.cardColor.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.zero,
             border: Border.all(
               color: widget.isSelected
                   ? ColorPallete.brightPink.withValues(alpha: 0.6)
@@ -291,15 +153,15 @@ class _AnimatedCategoryChipState extends State<_AnimatedCategoryChip>
               if (widget.isSelected) ...[
                 const Icon(
                   Icons.check_circle,
-                  size: 18,
+                  size: 10,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 5),
               ],
               Text(
                 widget.category.category ?? '',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 10,
                   fontWeight: widget.isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: Colors.white,
                   letterSpacing: 0.3,

@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:clubship/colors.dart';
 import 'package:clubship/clubs/club_card.dart';
 import 'package:clubship/router.dart';
@@ -110,7 +111,7 @@ class SearchResultsList extends ConsumerWidget {
                             gradient: LinearGradient(
                               colors: [
                                 ColorPallete.brightPink.withValues(alpha: 0.15),
-                                Colors.purple.withValues(alpha: 0.15),
+                                Brutal.magenta.withValues(alpha: 0.15),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(12),
@@ -244,7 +245,7 @@ class _SectionHeader extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 ColorPallete.brightPink.withValues(alpha: 0.2),
-                Colors.purple.withValues(alpha: 0.2),
+                Brutal.magenta.withValues(alpha: 0.2),
               ],
             ),
             borderRadius: BorderRadius.circular(12),

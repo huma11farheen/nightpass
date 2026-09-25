@@ -1,10 +1,9 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 
-class EVJDialog extends StatelessWidget {
-  final String title;
-  final String content;
-  final List<Widget> actions;
+// ─── Base dialog ──────────────────────────────────────────────────────────────
 
+class EVJDialog extends StatelessWidget {
   const EVJDialog({
     super.key,
     required this.title,
@@ -12,20 +11,34 @@ class EVJDialog extends StatelessWidget {
     required this.actions,
   });
 
+  final String title;
+  final String content;
+  final List<Widget> actions;
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.headlineMedium,
-      ),
-      content: Text(
-        content,
-        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Colors.black,
+    return Dialog(
+      backgroundColor: Brutal.elevated,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Brutal.display(size: 20, color: Brutal.paper)),
+            const SizedBox(height: 12),
+            Container(height: 1, color: Brutal.hairlineColor),
+            const SizedBox(height: 16),
+            Text(content, style: Brutal.body(size: 15, color: Brutal.dim)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: actions,
             ),
+          ],
+        ),
       ),
-      actions: actions,
     );
   }
 
@@ -34,99 +47,26 @@ class EVJDialog extends StatelessWidget {
     required String title,
     required String content,
     required List<Widget> actions,
-  }) {
-    return showDialog<T>(
-      context: context,
-      builder: (BuildContext context) {
-        return EVJDialog(
-          title: title,
-          content: content,
-          actions: actions,
-        );
-      },
-    );
-  }
+  }) =>
+      showDialog<T>(
+        context: context,
+        builder: (_) => EVJDialog(title: title, content: content, actions: actions),
+      );
 }
 
-class EVJSimpleDialog extends StatelessWidget {
-  final String title;
-  final String content;
-  final String? onPositiveButtonText;
-  final String? onNegativeButtonText;
-  final VoidCallback? onPositivePressed;
-  final VoidCallback? onNegativePressed;
+// ─── Simple confirm / cancel dialog ──────────────────────────────────────────
 
+class EVJSimpleDialog extends StatelessWidget {
   const EVJSimpleDialog({
     super.key,
     required this.title,
     required this.content,
     required this.onPositivePressed,
     required this.onNegativePressed,
-    this.onPositiveButtonText = "Yes",
-    this.onNegativeButtonText = "No",
+    this.onPositiveButtonText = 'Yes',
+    this.onNegativeButtonText = 'No',
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return EVJDialog(
-      title: title,
-      content: content,
-      actions: [
-        onNegativePressed == null
-            ? const SizedBox()
-            : TextButton(
-                onPressed: onNegativePressed,
-                child: Text(
-                  onNegativeButtonText ?? "No",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7),
-                      ),
-                ),
-              ),
-        onPositivePressed == null
-            ? const SizedBox()
-            : TextButton(
-                onPressed: onPositivePressed,
-                child: Text(
-                  onPositiveButtonText ?? "Yes",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                ),
-              ),
-      ],
-    );
-  }
-
-  static Future<bool?> show(
-    BuildContext context, {
-    required String title,
-    required String content,
-    VoidCallback? onPositivePressed,
-    VoidCallback? onNegativePressed,
-    String onPositiveButtonText = "Yes",
-    String onNegativeButtonText = "No",
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return EVJSimpleDialog(
-          title: title,
-          content: content,
-          onPositivePressed: onPositivePressed,
-          onNegativePressed: onNegativePressed,
-          onPositiveButtonText: onPositiveButtonText,
-          onNegativeButtonText: onNegativeButtonText,
-        );
-      },
-    );
-  }
-}
-
-class EVJWarningDialog extends StatelessWidget {
   final String title;
   final String content;
   final String? onPositiveButtonText;
@@ -134,47 +74,37 @@ class EVJWarningDialog extends StatelessWidget {
   final VoidCallback? onPositivePressed;
   final VoidCallback? onNegativePressed;
 
-  const EVJWarningDialog({
-    super.key,
-    required this.title,
-    required this.content,
-    required this.onPositivePressed,
-    required this.onNegativePressed,
-    this.onPositiveButtonText = "Yes",
-    this.onNegativeButtonText = "No",
-  });
-
   @override
   Widget build(BuildContext context) {
     return EVJDialog(
       title: title,
       content: content,
       actions: [
-        onNegativePressed == null
-            ? const SizedBox()
-            : TextButton(
-                onPressed: onNegativePressed,
-                child: Text(
-                  onNegativeButtonText ?? "No",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7),
-                      ),
-                ),
+        if (onNegativePressed != null)
+          GestureDetector(
+            onTap: onNegativePressed,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: Brutal.card,
+              child: Text(
+                onNegativeButtonText ?? 'No',
+                style: Brutal.label(size: 11, color: Brutal.dim),
               ),
-        onPositivePressed == null
-            ? const SizedBox()
-            : TextButton(
-                onPressed: onPositivePressed,
-                child: Text(
-                  onPositiveButtonText ?? "Yes",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                ),
+            ),
+          ),
+        const SizedBox(width: 8),
+        if (onPositivePressed != null)
+          GestureDetector(
+            onTap: onPositivePressed,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: Brutal.magenta,
+              child: Text(
+                onPositiveButtonText ?? 'Yes',
+                style: Brutal.label(size: 11, color: Brutal.paper),
               ),
+            ),
+          ),
       ],
     );
   }
@@ -185,21 +115,95 @@ class EVJWarningDialog extends StatelessWidget {
     required String content,
     VoidCallback? onPositivePressed,
     VoidCallback? onNegativePressed,
-    String onPositiveButtonText = "Yes",
-    String onNegativeButtonText = "No",
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return EVJWarningDialog(
+    String onPositiveButtonText = 'Yes',
+    String onNegativeButtonText = 'No',
+  }) =>
+      showDialog<bool>(
+        context: context,
+        builder: (_) => EVJSimpleDialog(
           title: title,
           content: content,
           onPositivePressed: onPositivePressed,
           onNegativePressed: onNegativePressed,
           onPositiveButtonText: onPositiveButtonText,
           onNegativeButtonText: onNegativeButtonText,
-        );
-      },
+        ),
+      );
+}
+
+// ─── Warning dialog (destructive action) ─────────────────────────────────────
+
+class EVJWarningDialog extends StatelessWidget {
+  const EVJWarningDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    required this.onPositivePressed,
+    required this.onNegativePressed,
+    this.onPositiveButtonText = 'Yes',
+    this.onNegativeButtonText = 'No',
+  });
+
+  final String title;
+  final String content;
+  final String? onPositiveButtonText;
+  final String? onNegativeButtonText;
+  final VoidCallback? onPositivePressed;
+  final VoidCallback? onNegativePressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return EVJDialog(
+      title: title,
+      content: content,
+      actions: [
+        if (onNegativePressed != null)
+          GestureDetector(
+            onTap: onNegativePressed,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: Brutal.card,
+              child: Text(
+                onNegativeButtonText ?? 'No',
+                style: Brutal.label(size: 11, color: Brutal.dim),
+              ),
+            ),
+          ),
+        const SizedBox(width: 8),
+        if (onPositivePressed != null)
+          GestureDetector(
+            onTap: onPositivePressed,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: Colors.red,
+              child: Text(
+                onPositiveButtonText ?? 'Yes',
+                style: Brutal.label(size: 11, color: Brutal.paper),
+              ),
+            ),
+          ),
+      ],
     );
   }
+
+  static Future<bool?> show(
+    BuildContext context, {
+    required String title,
+    required String content,
+    VoidCallback? onPositivePressed,
+    VoidCallback? onNegativePressed,
+    String onPositiveButtonText = 'Yes',
+    String onNegativeButtonText = 'No',
+  }) =>
+      showDialog<bool>(
+        context: context,
+        builder: (_) => EVJWarningDialog(
+          title: title,
+          content: content,
+          onPositivePressed: onPositivePressed,
+          onNegativePressed: onNegativePressed,
+          onPositiveButtonText: onPositiveButtonText,
+          onNegativeButtonText: onNegativeButtonText,
+        ),
+      );
 }

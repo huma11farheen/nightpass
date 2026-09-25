@@ -19,7 +19,10 @@ class NomuCachedNetworkImage extends StatelessWidget {
     fadeOutDuration: Duration.zero,
     imageUrl: imageUrl,
     fit: fit,
-    errorWidget: (context, url, err) => const SizedBox.shrink(),
+    errorWidget: (context, url, err) => Container(
+          color: const Color(0xFF1A1A2E),
+          child: const Icon(Icons.nightlife, color: Colors.white24, size: 32),
+        ),
     placeholder: needLoading
         ? (context, url) =>  Center(
       child: Container(),

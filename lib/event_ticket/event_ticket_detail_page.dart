@@ -1,19 +1,20 @@
-import 'dart:ui';
 import 'package:clubship/colors.dart';
+import 'package:clubship/widgets/back_button.dart';
+import 'dart:ui';
 import 'package:clubship/clubs/club_list_page.dart';
 import 'package:clubship/data/supabase_models/club.dart';
 import 'package:clubship/data/supabase_models/event_ticket.dart';
 import 'package:clubship/event/event_view_model.dart';
+import 'package:clubship/event/providers/get_events_provider.dart';
 import 'package:clubship/my_page/providers/get_user_detail_provider.dart';
 import 'package:clubship/qr_code/qr_code.dart';
 import 'package:clubship/router.dart';
 import 'package:clubship/utils/helpers.dart';
 import 'package:clubship/widgets/cached_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:clubship/design/brutal.dart';
 
 class EventTicketDetailPage extends ConsumerStatefulWidget {
   final EventTicket ticket;
@@ -29,47 +30,50 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
   bool _showQR = true;
 
   EventViewModel _createEventViewModelFromTicket() {
-    // Fetch club data from the club list provider to get actual coordinates
-    final clubsState = ref.read(clubListProvider);
+    // Prefer the real event from the provider — it has correct prices,
+    // guestlist counts, drink ticket counts, etc.
+    final realEvent = ref
+        .read(getEventsProvider)
+        .valueOrNull
+        ?.where((e) => e.id == widget.ticket.eventId)
+        .firstOrNull;
+    if (realEvent != null) return realEvent;
 
-    // Try to find the actual club with coordinates
+    // Fallback: reconstruct from ticket data (read-only view, no buying)
+    final clubsState = ref.read(clubListProvider);
     Club? actualClub;
     try {
       actualClub = clubsState.clubs.firstWhere(
         (club) => club.id == widget.ticket.clubId,
       );
-    } catch (e) {
-      // Club not found in list
-      actualClub = null;
-    }
+    } catch (_) {}
 
-    // Use actual club if found, otherwise create minimal club
-    final club = actualClub ?? Club(
-      id: widget.ticket.clubId ?? 'unknown',
-      createdAt: DateTime.now().toIso8601String(),
-      openingTime: '18:00',
-      closingTime: '06:00',
-      description: 'Club for ${widget.ticket.eventName ?? 'Event'}',
-      femalePrice: widget.ticket.price,
-      menPrice: widget.ticket.price,
-      name: widget.ticket.clubName ?? 'Unknown Club',
-      image: widget.ticket.image,
-      lat: 0.0,
-      lng: 0.0,
-      locationAddress: widget.ticket.clubName ?? 'Unknown Location',
-      femaleDrinkTicket: 0,
-      maleDrinkTicket: 0,
-      guestlist: 0,
-      guestlistDiscount: 0.0,
-    );
+    final club = actualClub ??
+        Club(
+          id: widget.ticket.clubId ?? 'unknown',
+          createdAt: DateTime.now().toIso8601String(),
+          openingTime: '18:00',
+          closingTime: '06:00',
+          description: '',
+          femalePrice: widget.ticket.price,
+          menPrice: widget.ticket.price,
+          name: widget.ticket.clubName ?? 'Unknown Club',
+          image: widget.ticket.image,
+          lat: 0.0,
+          lng: 0.0,
+          locationAddress: widget.ticket.clubName ?? 'Unknown Location',
+          femaleDrinkTicket: 0,
+          maleDrinkTicket: 0,
+          guestlist: 0,
+          guestlistDiscount: 0.0,
+        );
 
-    // Create EventViewModel from ticket data
     return EventViewModel(
       id: widget.ticket.eventId,
       createdAt: widget.ticket.createdAt,
       name: widget.ticket.eventName ?? 'Unknown Event',
       image: widget.ticket.image ?? '',
-      description: 'Event details for ${widget.ticket.eventName ?? 'this event'}',
+      description: '',
       femalePrice: widget.ticket.price,
       malePrice: widget.ticket.price,
       startDate: widget.ticket.eventDate ?? DateTime.now().toIso8601String(),
@@ -87,26 +91,15 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
     final date = DateTime.parse(widget.ticket.eventDate ?? '');
     final formattedDate = formatEventDate(date);
     final time =
-    formatTimeToHour(widget.ticket.eventDate?.toTimeString() ?? '');
+        formatTimeToHour(widget.ticket.eventDate?.toTimeString() ?? '');
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
+      backgroundColor: Brutal.bg,
       body: Stack(
         children: [
-          // Background gradient
+          // Background
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF1A1A2E),
-                    const Color(0xFF0F0F1E),
-                  ],
-                ),
-              ),
-            ),
+            child: Container(color: Brutal.bg),
           ),
 
           // Content
@@ -117,17 +110,7 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                 expandedHeight: 300,
                 pinned: true,
                 backgroundColor: Colors.transparent,
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => context.pop(),
-                  ),
-                ),
+                leading: const AppBackButton(forAppBar: true),
                 actions: [
                   if (!widget.ticket.isPayAtDoor &&
                       widget.ticket.checkedIn != true)
@@ -145,7 +128,7 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                             gradient: LinearGradient(
                               colors: [
                                 ColorPallete.brightPink,
-                                const Color(0xFFE91E63),
+                                Brutal.magenta,
                               ],
                             ),
                             shape: BoxShape.circle,
@@ -186,7 +169,7 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                             colors: [
                               Colors.transparent,
                               Colors.black.withValues(alpha: 0.7),
-                              const Color(0xFF0F0F1E),
+                              Brutal.bg,
                             ],
                             stops: const [0.0, 0.7, 1.0],
                           ),
@@ -204,13 +187,8 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                           children: [
                             Text(
                               widget.ticket.eventName ?? '',
-                              style: GoogleFonts.outfit(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.2,
-                                letterSpacing: -0.5,
-                              ),
+                              style:
+                                  Brutal.display(size: 26, color: Brutal.paper),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -222,19 +200,15 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                                   Icon(
                                     Icons.location_on_rounded,
                                     size: 16,
-                                    color: ColorPallete.brightPink
-                                        .withValues(alpha: 0.9),
+                                    color:
+                                        Brutal.magenta.withValues(alpha: 0.9),
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
                                       widget.ticket.clubName ?? '',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white
-                                            .withValues(alpha: 0.85),
-                                      ),
+                                      style: Brutal.body(
+                                          size: 15, color: Brutal.dim),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -259,7 +233,7 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                                 gradient: LinearGradient(
                                   colors: [
                                     ColorPallete.brightPink,
-                                    const Color(0xFFE91E63),
+                                    Brutal.magenta,
                                   ],
                                 ),
                                 shadowColor: ColorPallete.brightPink,
@@ -350,105 +324,54 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                     if (_showQR)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(0xFF1A1A2E)
-                                        .withValues(alpha: 0.8),
-                                    const Color(0xFF16213E)
-                                        .withValues(alpha: 0.8),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.1),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: ColorPallete.brightPink
-                                        .withValues(alpha: 0.1),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Brutal.elevated,
+                            border: Border.all(
+                                color: Brutal.hairlineColor, width: 1),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'YOUR TICKET',
+                                style:
+                                    Brutal.label(size: 13, color: Brutal.mute),
                               ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'YOUR TICKET',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color:
-                                      Colors.white.withValues(alpha: 0.5),
-                                      letterSpacing: 2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
-                                  // QR Code
-                                  Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.2),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 10),
-                                        ),
-                                      ],
-                                    ),
-                                    child: QRCodeGenerator(
-                                      widget.ticket.qrCode,
-                                      height: 250,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 20),
-
-                                  Text(
-                                    widget.ticket.checkedIn == true
-                                        ? 'TICKET USED'
-                                        : 'SCAN AT ENTRANCE',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: widget.ticket.checkedIn == true
-                                          ? Colors.green
-                                          : ColorPallete.brightPink,
-                                      letterSpacing: 1.5,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 12),
-
-                                  Text(
-                                    'TICKET #${widget.ticket.id
-                                        .substring(0, 8)
-                                        .toUpperCase()}',
-                                    style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                      Colors.white.withValues(alpha: 0.4),
-                                      letterSpacing: 1.5,
-                                    ),
-                                  ),
-                                ],
+                              // QR Code
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                color: Colors.white,
+                                child: QRCodeGenerator(
+                                  widget.ticket.qrCode,
+                                  height: 250,
+                                ),
                               ),
-                            ),
+
+                              const SizedBox(height: 20),
+
+                              Text(
+                                widget.ticket.checkedIn == true
+                                    ? 'TICKET USED'
+                                    : 'SCAN AT ENTRANCE',
+                                style: Brutal.label(
+                                  size: 14,
+                                  color: widget.ticket.checkedIn == true
+                                      ? Colors.green
+                                      : Brutal.magenta,
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              Text(
+                                'TICKET #${widget.ticket.id.substring(0, 8).toUpperCase()}',
+                                style:
+                                    Brutal.label(size: 12, color: Brutal.mute),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -459,71 +382,42 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                     if (widget.ticket.checkedIn != true)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.amber.withValues(alpha: 0.2),
-                                    Colors.orange.withValues(alpha: 0.15),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Brutal.elevated,
+                            border: Border.all(
+                              color: Brutal.yellow.withValues(alpha: 0.4),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.local_bar_rounded,
+                                color: Brutal.yellow,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Drink Tickets',
+                                      style: Brutal.body(
+                                          size: 16, color: Brutal.paper),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Your drink tickets will be generated after scanning this ticket at the entrance',
+                                      style: Brutal.body(
+                                          size: 14, color: Brutal.dim),
+                                    ),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.amber.withValues(alpha: 0.3),
-                                  width: 1,
-                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      Icons.local_bar_rounded,
-                                      color: Colors.amber.shade300,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Drink Tickets',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                            letterSpacing: 0.3,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Your drink tickets will be generated after scanning this ticket at the entrance',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
@@ -555,9 +449,10 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                               icon: Icons.info_outline_rounded,
                               label: 'Event Details',
                               onTap: () {
-
-                                final eventViewModel = _createEventViewModelFromTicket();
-                                context.push(Routes.eventDetail, extra: eventViewModel);
+                                final eventViewModel =
+                                    _createEventViewModelFromTicket();
+                                context.push(Routes.eventDetail,
+                                    extra: eventViewModel);
                               },
                             ),
                           ),
@@ -598,21 +493,12 @@ class _EventTicketDetailPageState extends ConsumerState<EventTicketDetailPage> {
                         const SizedBox(height: 24),
                         Text(
                           'CHECKED IN',
-                          style: GoogleFonts.outfit(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 3,
-                          ),
+                          style: Brutal.display(size: 38, color: Brutal.paper),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'This ticket has been used',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
+                          style: Brutal.body(size: 18, color: Brutal.dim),
                         ),
                       ],
                     ),
@@ -640,26 +526,13 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor.withValues(alpha: 0.5),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Text(
         text,
-        style: GoogleFonts.inter(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-        ),
+        style: Brutal.label(size: 12, color: Colors.white),
       ),
     );
   }
@@ -678,64 +551,32 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1A1A2E).withValues(alpha: 0.6),
-                const Color(0xFF16213E).withValues(alpha: 0.6),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Brutal.elevated,
+        border: Border.all(color: Brutal.hairlineColor, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: ColorPallete.brightPink.withValues(alpha: 0.9),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    label.toUpperCase(),
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.5),
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  height: 1.2,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Icon(icon,
+                  size: 16, color: Brutal.magenta.withValues(alpha: 0.9)),
+              const SizedBox(width: 6),
+              Text(label.toUpperCase(),
+                  style: Brutal.label(size: 11, color: Brutal.mute)),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Brutal.body(size: 18, color: Brutal.paper),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -756,47 +597,19 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  ColorPallete.brightPink.withValues(alpha: 0.3),
-                  Colors.purple.withValues(alpha: 0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Brutal.elevated,
+          border: Border.all(color: Brutal.hairlineColor, width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: Brutal.paper),
+            const SizedBox(width: 8),
+            Text(label, style: Brutal.body(size: 16, color: Brutal.paper)),
+          ],
         ),
       ),
     );

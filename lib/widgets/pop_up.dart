@@ -1,72 +1,54 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 
 Future<void> showCustomAlertDialog({
   required BuildContext context,
   required String title,
   required String message,
-  String confirmText = "OK",
+  String confirmText = 'OK',
   VoidCallback? onConfirm,
 }) async {
   await showDialog(
     context: context,
-    barrierColor: Colors.black.withValues(alpha:0.7), // translucent black backdrop
+    barrierColor: Brutal.bg.withValues(alpha: 0.85),
     builder: (ctx) => Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Brutal.elevated,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ Green circle with tick
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.green,
-              ),
-              child: const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 36,
-              ),
+              padding: const EdgeInsets.all(16),
+              color: Brutal.yellow.withValues(alpha: 0.12),
+              child: const Icon(Icons.check, color: Brutal.yellow, size: 36),
             ),
-            const SizedBox(height: 16),
-            // ✅ Title
+            const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: Brutal.display(size: 22, color: Brutal.paper),
             ),
-            const SizedBox(height: 12),
-            // ✅ Message
+            const SizedBox(height: 10),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-              ),
+              style: Brutal.body(size: 15, color: Brutal.dim),
             ),
-            const SizedBox(height: 24),
-            // ✅ Button
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  onConfirm?.call();
-                },
-                child: Text(confirmText),
+            const SizedBox(height: 28),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(ctx).pop();
+                onConfirm?.call();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                color: Brutal.magenta,
+                alignment: Alignment.center,
+                child: Text(confirmText,
+                    style: Brutal.label(size: 12, color: Brutal.paper)),
               ),
             ),
           ],

@@ -1,64 +1,87 @@
-import 'dart:convert';
+import 'package:clubship/data/supabase_models/venue.dart';
+import 'package:clubship/supabase/supabase_client.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:clubship/supabase/config.dart';
 
+/// Thin result type kept so all existing call sites compile unchanged.
+class PlacesResult {
+  final String name;
+  final String address;
+  final double lat;
+  final double lng;
+  final String? photoUrl;
+  final bool? openNow;
+  /// 'bar' | 'club' — sourced from the venue table's venue_type column.
+  final String venueType;
+
+  const PlacesResult({
+    required this.name,
+    required this.address,
+    required this.lat,
+    required this.lng,
+    this.photoUrl,
+    this.openNow,
+    this.venueType = 'bar',
+  });
+
+  PlacesResult withPhoto(String? url) => PlacesResult(
+        name: name,
+        address: address,
+        lat: lat,
+        lng: lng,
+        photoUrl: url,
+        openNow: openNow,
+        venueType: venueType,
+      );
+
+  static PlacesResult fromVenue(Venue v) => PlacesResult(
+        name: v.name,
+        address: v.area ?? 'Tokyo',
+        lat: v.lat,
+        lng: v.lng,
+        photoUrl: v.image,
+        openNow: null,
+        venueType: v.venueType, // 'bar' or 'club'
+      );
+}
+
+/// Fetches venues from the Supabase `venue` table.
 class PlacesPhotoService {
-  static const _cachePrefix = 'places_photo_';
-  static const _photoWidth = 400;
+  static List<PlacesResult>? _cache;
 
-  static String get _apiKey => Config.get('PLACE_API');
-
-  // Returns a photo URL for the given club name, cached permanently.
-  static Future<String?> getPhotoUrl(String clubName) async {
-    final cacheKey = '$_cachePrefix${clubName.toLowerCase().replaceAll(' ', '_')}';
-
-    final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getString(cacheKey);
-    if (cached != null) return cached.isEmpty ? null : cached;
+  static Future<List<PlacesResult>> searchBarsInTokyo() async {
+    if (_cache != null) return _cache!;
 
     try {
-      final photoRef = await _findPhotoReference(clubName);
-      if (photoRef == null) {
-        await prefs.setString(cacheKey, '');
-        return null;
-      }
+      final data = await supabase
+          .from(Venue.modelName)
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
 
-      final photoUrl = _buildPhotoUrl(photoRef);
-      await prefs.setString(cacheKey, photoUrl);
-      return photoUrl;
+      final venues = data.map<Venue>((e) => Venue.fromJson(e)).toList();
+      _cache = venues.map(PlacesResult.fromVenue).toList();
+      return _cache!;
     } catch (e) {
-      debugPrint('PlacesPhotoService error for $clubName: $e');
+      debugPrint('PlacesPhotoService (Supabase) error: $e');
+      return [];
+    }
+  }
+
+  static void clearCache() => _cache = null;
+
+  static Future<String?> getPhotoUrl(String clubName) async {
+    try {
+      final data = await supabase
+          .from(Venue.modelName)
+          .select('image')
+          .eq('name', clubName)
+          .maybeSingle();
+      return data?['image'] as String?;
+    } catch (e) {
+      debugPrint('PlacesPhotoService.getPhotoUrl error: $e');
       return null;
     }
   }
 
-  static Future<String?> _findPhotoReference(String clubName) async {
-    final uri = Uri.https('maps.googleapis.com', '/maps/api/place/findplacefromtext/json', {
-      'input': '$clubName Tokyo nightclub',
-      'inputtype': 'textquery',
-      'fields': 'photos',
-      'key': _apiKey,
-    });
-
-    final response = await http.get(uri);
-    if (response.statusCode != 200) return null;
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final candidates = json['candidates'] as List?;
-    if (candidates == null || candidates.isEmpty) return null;
-
-    final photos = candidates.first['photos'] as List?;
-    if (photos == null || photos.isEmpty) return null;
-
-    return photos.first['photo_reference'] as String?;
-  }
-
-  static String _buildPhotoUrl(String photoReference) {
-    return 'https://maps.googleapis.com/maps/api/place/photo'
-        '?maxwidth=$_photoWidth'
-        '&photo_reference=$photoReference'
-        '&key=$_apiKey';
-  }
+  static Future<bool?> getOpenNow(String venueName) async => null;
 }

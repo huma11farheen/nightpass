@@ -1,12 +1,12 @@
+import 'package:clubship/widgets/back_button.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:clubship/colors.dart';
 import 'package:clubship/data/supabase_models/club.dart';
+import 'package:clubship/design/brutal.dart';
 import 'package:clubship/event/event_card.dart';
 import 'package:clubship/event/event_view_model.dart';
 import 'package:clubship/router.dart';
 import 'package:clubship/utils/helpers.dart';
 import 'package:clubship/widgets/app_button.dart';
-import 'package:clubship/widgets/app_text_styles.dart';
 import 'package:clubship/widgets/club_genre_selector.dart';
 import 'package:clubship/widgets/dots_indicator.dart';
 import 'package:clubship/widgets/map_view_widget.dart';
@@ -18,7 +18,6 @@ import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../event/event_list/event_list_page.dart';
-
 
 class ClubDetailPage extends ConsumerStatefulWidget {
   const ClubDetailPage({
@@ -72,11 +71,11 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
   @override
   Widget build(BuildContext context) {
     final clubModel = widget.club;
-    List<String> images = List.from([clubModel.image]);
-    //images.insert(0, clubModel.image ?? '');
+    final List<String> images = List.from([clubModel.image]);
     final eventsProvider = ref.watch(eventListProvider);
     final events = eventsProvider.events;
-    final isOpen = isClubOpen(clubModel.openingTime, clubModel.closingTime);
+    final isOpen = isClubOpen(
+        clubModel.openingTime, clubModel.closingTime, clubModel.workingDay);
     final clubEvents = events.where((event) {
       return event.clubId == widget.club.id;
     }).toList();
@@ -87,253 +86,176 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
         position: _slideAnimation,
         child: SafeArea(
           child: Scaffold(
-        // appBar: AppBar(
-        //   title: Text(clubModel.name),
-        // ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                height: 12,
+            bottomNavigationBar: Padding(
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16,
               ),
-              AppButton.primary(
-                text: 'Reserve Table',
-                onPressed: () {
-                  context.push(
-                    Routes.reserveClub,
-                    extra: clubModel,
-                  );
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  AppButton.primary(
+                    text: 'Reserve Table',
+                    onPressed: () {
+                      context.push(
+                        Routes.reserveClub,
+                        extra: clubModel,
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        backgroundColor: Colors.black.withValues(alpha: 0.9),
-        body: RefreshIndicator(
-          color: ColorPallete.brightPink,
-          backgroundColor: ColorPallete.cardColor,
-          strokeWidth: 3.0,
-          displacement: 60,
-          edgeOffset: 20,
-          onRefresh: () async {
-            setState(() {
-              // Rebuild to refresh data
-            });
-            await Future.delayed(const Duration(milliseconds: 800));
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Stack(children: [
-              Column(
-              children: [
-                SizedBox(
-                  height: 300,
-                  child: images.length == 1
-                      ? Container(
-                    height: 400,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.black,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Stack(
-                        children: [
-                          // Background Image
-                          Positioned.fill(
-                            child: Image.network(
-                              images.first,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-
-                          // Gradient overlay
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha:0.3),
-                                    Colors.black.withValues(alpha:0.85),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Club name and status
-                          Positioned(
-                            left: 20,
-                            right: 20,
-                            bottom: 20,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Club Name
-                                Text(
-                                  clubModel.name.capitalize(),
-                                  style: const TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    letterSpacing: 0.5,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black87,
-                                        offset: Offset(0, 2),
-                                        blurRadius: 8,
+            ),
+            backgroundColor: Brutal.bg,
+            body: RefreshIndicator(
+              color: Brutal.magenta,
+              backgroundColor: Brutal.elevated,
+              strokeWidth: 3.0,
+              displacement: 60,
+              edgeOffset: 20,
+              onRefresh: () async {
+                setState(() {});
+                await Future.delayed(const Duration(milliseconds: 800));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Stack(children: [
+                  Column(
+                    children: [
+                      // ── Hero image section ──────────────────────────────
+                      SizedBox(
+                        height: 300,
+                        child: images.length == 1
+                            ? Container(
+                                height: 300,
+                                width: double.infinity,
+                                color: Colors.black,
+                                child: Stack(
+                                  children: [
+                                    // Background image — no ClipRRect
+                                    Positioned.fill(
+                                      child: Image.network(
+                                        images.first,
+                                        fit: BoxFit.cover,
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Status Badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: (isOpen ? Colors.green : Colors.red).withValues(alpha:0.9),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: (isOpen ? Colors.green : Colors.red).withValues(alpha:0.4),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        isOpen ? 'OPEN NOW' : 'CLOSED',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          letterSpacing: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Back Button (iOS-style)
-                          Positioned(
-                            top: 12,
-                            left: 12,
-                            child: GestureDetector(
-                              onTap: () {
-                                context.pop();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
                                     ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.arrow_back_ios_new,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                      : Stack(
-                          children: [
-                            CarouselSlider(
-                              options: CarouselOptions(
-                                autoPlay: false,
-                                aspectRatio: 17 / 12,
-                                viewportFraction: 2,
-                                enlargeCenterPage: true,
-                                onPageChanged: (index, reason) {
-                                  setState(() {
-                                    _currentIndex = index;
-                                  });
-                                },
-                              ),
-                              items: images
-                                  .map(
-                                    (e) => Container(
-                                      decoration: BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.purple
-                                                .withValues(alpha: 0.5),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 5),
+
+                                    // Flat fade-to-bg gradient overlay
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Brutal.bg.withValues(alpha: 0.85),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Club name + status
+                                    Positioned(
+                                      left: 16,
+                                      right: 16,
+                                      bottom: 16,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            clubModel.name.capitalize(),
+                                            style: Brutal.display(
+                                                size: 28,
+                                                color: Brutal.paper),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          // Flat square status chip
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 5),
+                                            color: isOpen
+                                                ? Colors.green
+                                                : Colors.red,
+                                            child: Text(
+                                              isOpen ? 'OPEN NOW' : 'CLOSED',
+                                              style: Brutal.label(
+                                                  size: 10,
+                                                  color: Brutal.paper),
+                                            ),
                                           ),
                                         ],
-                                        image: DecorationImage(
-                                          image: NetworkImage(e),
-                                          // Use subImages
-                                          fit: BoxFit.cover,
-                                        ),
                                       ),
                                     ),
-                                  )
-                                  .toList(),
-                            ),
-                            Positioned(
-                              bottom: 2.0,
-                              right: 0.0,
-                              left: 0.0,
-                              child: DotsIndicator(
-                                dotCount: images.length,
-                                currentIndex: _currentIndex,
+
+                                    // Back button — flat square
+                                    Positioned(
+                                      top: 12,
+                                      left: 12,
+                                      child: const AppBackButton(forAppBar: true),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Stack(
+                                children: [
+                                  CarouselSlider(
+                                    options: CarouselOptions(
+                                      autoPlay: false,
+                                      aspectRatio: 17 / 12,
+                                      viewportFraction: 2,
+                                      enlargeCenterPage: true,
+                                      onPageChanged: (index, reason) {
+                                        setState(() {
+                                          _currentIndex = index;
+                                        });
+                                      },
+                                    ),
+                                    items: images
+                                        .map(
+                                          (e) => Container(
+                                            decoration: BoxDecoration(
+                                              image: DecorationImage(
+                                                image: NetworkImage(e),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                                  Positioned(
+                                    bottom: 2.0,
+                                    right: 0.0,
+                                    left: 0.0,
+                                    child: DotsIndicator(
+                                      dotCount: images.length,
+                                      currentIndex: _currentIndex,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                ),
-                _buildCard(
-                    image: NetworkImage(clubModel.image ?? ''),
-                    title: clubModel.name ,
-                    description: clubModel.description,
-                    clubModel: clubModel,
-                    events: clubEvents,
-                    isLoadingEvents: eventsProvider.loading),
-              ],
+                      ),
+
+                      _buildCard(
+                        image: NetworkImage(clubModel.image ?? ''),
+                        title: clubModel.name,
+                        description: clubModel.description,
+                        clubModel: clubModel,
+                        events: clubEvents,
+                        isLoadingEvents: eventsProvider.loading,
+                      ),
+                    ],
+                  ),
+                ]),
+              ),
             ),
-            ]),
           ),
-        ),
-      ),
         ),
       ),
     );
@@ -347,157 +269,66 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
     Club? clubModel,
     required bool isLoadingEvents,
   }) {
-    final openingTime = getHourAndMinute(clubModel?.openingTime ?? '00:00');
-    final closingTime = getHourAndMinute(clubModel?.closingTime ?? '00:00');
-
+    final openingTime =
+        getHourAndMinute(clubModel?.openingTime ?? '00:00');
+    final closingTime =
+        getHourAndMinute(clubModel?.closingTime ?? '00:00');
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Description Card
+          // ── Description card ─────────────────────────────────────────────
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2A2D3A).withValues(alpha:0.4),
-                  ColorPallete.backgroundcolor2.withValues(alpha:0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-              ],
+              color: Brutal.elevated,
+              border: Border.all(color: Brutal.hairlineColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: ColorPallete.brightPink.withValues(alpha:0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.info_outline,
-                        color: ColorPallete.brightPink,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'About',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                _buildSectionHeader('ABOUT'),
+                const SizedBox(height: 10),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
+                  style: Brutal.body(size: 16, color: Brutal.dim),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // Operating Hours Card
+          // ── Operating Hours card ──────────────────────────────────────────
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2A2D3A).withValues(alpha:0.4),
-                  ColorPallete.backgroundcolor2.withValues(alpha:0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-              ],
+              color: Brutal.elevated,
+              border: Border.all(color: Brutal.hairlineColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: ColorPallete.brightPink.withValues(alpha:0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.access_time,
-                        color: ColorPallete.brightPink,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Operating Hours',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                _buildSectionHeader('OPERATING HOURS'),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildTimeInfo(
-                      'Opens',
+                      'OPENS',
                       '${openingTime['hour'].toString().padLeft(2, '0')}:${openingTime['minute'].toString().padLeft(2, '0')}',
                       Icons.wb_sunny_outlined,
                     ),
                     Container(
-                      height: 50,
                       width: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            ColorPallete.brightPink.withValues(alpha: 0.5),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
+                      height: 40,
+                      color: Brutal.hairlineColor,
                     ),
                     _buildTimeInfo(
-                      'Closes',
+                      'CLOSES',
                       '${closingTime['hour'].toString().padLeft(2, '0')}:${closingTime['minute'].toString().padLeft(2, '0')}',
                       Icons.nightlight_round,
                     ),
@@ -506,122 +337,44 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // Working Days Card
+          // ── Working Days card ─────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2A2D3A).withValues(alpha:0.4),
-                  ColorPallete.backgroundcolor2.withValues(alpha:0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-              ],
+              color: Brutal.elevated,
+              border: Border.all(color: Brutal.hairlineColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: ColorPallete.brightPink.withValues(alpha:0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.calendar_today,
-                        color: ColorPallete.brightPink,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Working Days',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                _buildSectionHeader('WORKING DAYS'),
+                const SizedBox(height: 10),
                 WorkingDaysContainer(
                   canEdit: false,
-                  color: ColorPallete.icon,
+                  color: Brutal.magenta,
                   onTagsChanged: (v) {},
                   selectedTags: clubModel?.workingDay ?? [],
-                  title: '', // Remove duplicate title
+                  title: '',
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // Event Genres Card
+          // ── Event Genres card ─────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2A2D3A).withValues(alpha:0.4),
-                  ColorPallete.backgroundcolor2.withValues(alpha:0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-              ],
+              color: Brutal.elevated,
+              border: Border.all(color: Brutal.hairlineColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: ColorPallete.brightPink.withValues(alpha:0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.music_note,
-                        color: ColorPallete.brightPink,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Event Genres',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                _buildSectionHeader('EVENT GENRES'),
+                const SizedBox(height: 10),
                 ClubGenreSelector(
                   isEditable: false,
                   selectedGenres: clubModel?.genre ?? [],
@@ -630,225 +383,107 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // Location Card
+          // ── Location card ─────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2A2D3A).withValues(alpha:0.4),
-                  ColorPallete.backgroundcolor2.withValues(alpha:0.3),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-              ],
+              color: Brutal.elevated,
+              border: Border.all(color: Brutal.hairlineColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha:0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.location_on,
-                        color: Colors.redAccent,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Location',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            clubModel?.locationAddress ?? '',
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                _buildSectionHeader('LOCATION'),
+                const SizedBox(height: 4),
+                Text(
+                  clubModel?.locationAddress ?? '',
+                  style: Brutal.body(size: 15, color: Brutal.dim),
                 ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: MapViewWidget(
-                      lat: clubModel?.lat ?? 0.0,
-                      lon: clubModel?.lng ?? 0.0,
-                      locationName: clubModel?.name),
+                const SizedBox(height: 12),
+                // No ClipRRect — map is flat
+                MapViewWidget(
+                  lat: clubModel?.lat ?? 0.0,
+                  lon: clubModel?.lng ?? 0.0,
+                  locationName: clubModel?.name,
+                  locationAddress: clubModel?.locationAddress,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // Rules and Regulations Card (if exists)
+          // ── Rules & Regulations card ──────────────────────────────────────
           if (clubModel?.rulesAndRegulation != null &&
               clubModel!.rulesAndRegulation!.isNotEmpty) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    ColorPallete.deepPurple.withValues(alpha:0.4),
-                    ColorPallete.cardColor.withValues(alpha:0.3),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
+                color: Brutal.elevated,
+                border: Border.all(
+                    color: Brutal.yellow.withValues(alpha: 0.4)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha:0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.rule,
-                          color: Colors.orange,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Rules & Regulations',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  _buildSectionHeader('RULES & REGULATIONS'),
+                  const SizedBox(height: 10),
                   Text(
                     clubModel.rulesAndRegulation ?? '',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                      height: 1.6,
-                    ),
+                    style: Brutal.body(size: 16, color: Brutal.dim),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
           ],
 
-          // Upcoming Events Section
+          // ── Upcoming Events section header ────────────────────────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ColorPallete.brightPink.withValues(alpha:0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.event,
-                  color: ColorPallete.brightPink,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Upcoming Events',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              Container(width: 2, height: 14, color: Brutal.magenta),
+              const SizedBox(width: 8),
+              Text('UPCOMING EVENTS', style: Brutal.display(size: 17)),
               const Spacer(),
               if (events.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: ColorPallete.brightPink.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  color: Brutal.magenta,
                   child: Text(
                     '${events.length}',
-                    style: const TextStyle(
-                      color: ColorPallete.brightPink,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                    style: Brutal.label(size: 12, color: Colors.white),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
+          // ── Events grid ───────────────────────────────────────────────────
           if (isLoadingEvents)
             _buildEventsSkeleton()
           else if (events.isEmpty)
             Container(
               padding: const EdgeInsets.all(40),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF2A2D3A).withValues(alpha: 0.3),
-                    ColorPallete.backgroundcolor2.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  width: 1,
-                ),
+                color: Brutal.elevated,
+                border: Border.all(color: Brutal.hairlineColor),
               ),
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.event_busy,
-                    size: 48,
-                    color: Colors.white.withValues(alpha: 0.3),
+                    size: 40,
+                    color: Brutal.mute,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 10),
+                  Text(
                     'No upcoming events',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 16,
-                    ),
+                    style: Brutal.body(size: 16, color: Brutal.mute),
                   ),
                 ],
               ),
@@ -857,9 +492,10 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.65,
+                childAspectRatio: 0.78,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
@@ -883,36 +519,27 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
     );
   }
 
+  /// Magenta accent bar + uppercase display title — used for every card header.
+  Widget _buildSectionHeader(String title) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(width: 2, height: 14, color: Brutal.magenta),
+        const SizedBox(width: 8),
+        Text(title, style: Brutal.display(size: 17)),
+      ],
+    );
+  }
+
+  /// Icon + label/time column — no circular container.
   Widget _buildTimeInfo(String label, String time, IconData icon) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: ColorPallete.brightPink.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: ColorPallete.brightPink, size: 24),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          time,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
+        Icon(icon, color: Brutal.magenta, size: 22),
+        const SizedBox(height: 8),
+        Text(label, style: Brutal.label(size: 10, color: Brutal.mute)),
+        const SizedBox(height: 4),
+        Text(time, style: Brutal.display(size: 26, color: Brutal.paper)),
       ],
     );
   }
@@ -924,7 +551,7 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.65,
+          childAspectRatio: 0.78,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -936,56 +563,29 @@ class _ClubDetailPageState extends ConsumerState<ClubDetailPage>
               createdAt: DateTime.now().toString(),
               name: 'Electronic Music Night',
               image: 'https://via.placeholder.com/400x230',
-              description: 'Join us for an amazing night of electronic music with top DJs',
+              description:
+                  'Join us for an amazing night of electronic music with top DJs',
               femalePrice: 0,
-              startDate: DateTime.now().add(Duration(days: index + 1)).toString(),
-              endDate: DateTime.now().add(Duration(days: index + 1, hours: 6)).toString(),
+              startDate: DateTime.now()
+                  .add(Duration(days: index + 1))
+                  .toString(),
+              endDate: DateTime.now()
+                  .add(Duration(days: index + 1, hours: 6))
+                  .toString(),
               subImages: [],
               category: ['Electronic', 'Dance'],
               clubId: widget.club.id,
               malePrice: 3000,
               registeredGuestlist: 45,
               gustlist: 100,
-              locationAddress: widget.club.locationAddress ?? 'Tokyo, Japan',
+              locationAddress:
+                  widget.club.locationAddress ?? 'Tokyo, Japan',
               club: widget.club,
             ),
             onTap: () {},
           );
         },
       ),
-    );
-  }
-}
-
-class PriceTag extends StatelessWidget {
-  final String price;
-
-  const PriceTag({super.key, required this.price});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            const SizedBox(width: 9),
-            const Text(
-              'Starts from : ¥ ',
-              textAlign: TextAlign.left,
-              style: AppTextStyles.titleSmall,
-            ),
-            Text(
-              price,
-              textAlign: TextAlign.left,
-              style: const TextStyle(
-                height: 1.6,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

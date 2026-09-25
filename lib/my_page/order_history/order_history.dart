@@ -1,13 +1,10 @@
-import 'dart:ui';
-
-import 'package:clubship/colors.dart';
+import 'package:clubship/widgets/back_button.dart';
+import 'package:clubship/design/brutal.dart';
 import 'package:clubship/my_page/order_history/order_history_view_model.dart';
 import 'package:clubship/utils/helpers.dart';
-import 'package:clubship/utils/typography.dart';
 import 'package:clubship/widgets/async_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/get_order_history_provider.dart';
 import 'order_history_list_tile.dart';
@@ -17,21 +14,15 @@ class OrderHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Brutal.bg,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: Brutal.bg,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Order History',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+          leading: const AppBackButton(forAppBar: true),
+          title: Text('My Bookings', style: Brutal.display(size: 20, color: Brutal.paper)),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: Brutal.hairlineColor),
           ),
         ),
         body: AsyncValueWidget<Map<String, List<OrderHistoryViewModel>>>(
@@ -43,33 +34,24 @@ class OrderHistoryScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: ColorPallete.brightPink.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.receipt_long,
-                        size: 64,
-                        color: ColorPallete.brightPink,
+                      width: 80,
+                      height: 80,
+                      color: Brutal.elevated,
+                      child: const Icon(
+                        Icons.receipt_long_outlined,
+                        size: 36,
+                        color: Brutal.mute,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Text(
                       'No purchases yet',
-                      style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                      style: Brutal.display(size: 22, color: Brutal.paper),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Your order history will appear here',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
+                      style: Brutal.body(size: 15, color: Brutal.mute),
                     ),
                   ],
                 ),
@@ -77,7 +59,7 @@ class OrderHistoryScreen extends ConsumerWidget {
             }
 
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
               itemCount: groupedOrders.length,
               itemBuilder: (context, index) {
                 final monthYear = groupedOrders.keys.elementAt(index);
@@ -86,36 +68,22 @@ class OrderHistoryScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding:  EdgeInsets.only(left: 4, bottom: 16, top: index == 0 ? 0 : 24),
+                      padding: EdgeInsets.only(bottom: 12, top: index == 0 ? 0 : 28),
                       child: Row(
                         children: [
-                          Container(
-
-                            width: 4,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: ColorPallete.brightPink,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
+                          Container(width: 2, height: 12, color: Brutal.magenta),
+                          const SizedBox(width: 10),
                           Text(
-                            '${monthYear.toMonthName(context, monthYear.substring(0, 2))} ${monthYear.substring(3)}',
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                            '${monthYear.toMonthName(context, monthYear.substring(0, 2))} ${monthYear.substring(3)}'.toUpperCase(),
+                            style: Brutal.label(size: 11, color: Brutal.dim),
                           ),
                         ],
                       ),
                     ),
                     ...ordersForMonth.map(
                       (order) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: OrderHistoryListTile(
-                          orderHistoryViewModel: order,
-                        ),
+                        padding: const EdgeInsets.only(bottom: 1),
+                        child: OrderHistoryListTile(orderHistoryViewModel: order),
                       ),
                     ),
                   ],

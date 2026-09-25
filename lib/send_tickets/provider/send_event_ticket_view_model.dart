@@ -37,7 +37,10 @@ class SendEventTicketViewModel extends StateNotifier<SendTicketState> {
         isEventTicket: true);
     state = state.copyWith(isLoading: false);
     return sent;
+  }
 
+  void reset() {
+    state = const SendTicketState();
   }
 }
 

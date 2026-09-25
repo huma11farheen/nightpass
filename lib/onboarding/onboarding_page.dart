@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:clubship/onboarding/onboarding_view_model.dart';
 import 'package:clubship/router.dart';
 import 'package:clubship/widgets/nomu_button.dart';
@@ -25,7 +26,7 @@ class _OnBoardingPageState extends ConsumerState<OnBoardingPage> {
 
   List<Map<String, String>> onboardingData = [
     {
-      'title': 'Welcome to Clubship',
+      'title': 'Welcome to Nightpass',
       'subtitle':
           'Discover Exclusive Events Near You – Your Ticket to the Best Clubbing Experiences Awaits!',
       'image': 'assets/images/logo.png',
@@ -121,7 +122,7 @@ class _OnBoardingPageState extends ConsumerState<OnBoardingPage> {
       height: 8.0,
       width: currentPage == index ? 24.0 : 8.0,
       decoration: BoxDecoration(
-        color: currentPage == index ? Colors.purpleAccent : Colors.grey,
+        color: currentPage == index ? Brutal.magenta : Colors.grey,
         borderRadius: BorderRadius.circular(4.0),
       ),
     );

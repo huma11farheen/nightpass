@@ -10,9 +10,11 @@ class CommonWebView extends ConsumerStatefulWidget {
   const CommonWebView({
     super.key,
     required this.urlParameter,
+    this.showCloseButton = true,
   });
 
   final String urlParameter;
+  final bool showCloseButton;
 
   @override
   ConsumerState<CommonWebView> createState() => _CommonWebViewState();
@@ -87,7 +89,7 @@ class _CommonWebViewState extends ConsumerState<CommonWebView> {
           children: [
             Row(
               children: [
-                _buildLeadingExitButton1(context),
+                if (widget.showCloseButton) _buildLeadingExitButton1(context),
                 const Spacer(),
                 ..._buildNavigationIcons(webViewState),
               ],

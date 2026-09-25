@@ -2,7 +2,6 @@ import 'package:clubship/data/supabase_models/club.dart';
 import 'package:clubship/widgets/cached_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 class EventCard extends StatelessWidget {
   final Club club;

@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 
 Future<void> showFailureAlertDialog({
@@ -9,60 +10,49 @@ Future<void> showFailureAlertDialog({
 }) async {
   await showDialog(
     context: context,
-    barrierColor: Colors.black.withValues(alpha:0.7), // dark transparent overlay
+    barrierColor: Brutal.bg.withValues(alpha: 0.85),
     builder: (ctx) => Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Brutal.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ❌ Red circle icon
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.red,
-              ),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 36,
-              ),
+              padding: const EdgeInsets.all(16),
+              color: Colors.red.withValues(alpha: 0.12),
+              child: const Icon(Icons.close, color: Colors.red, size: 36),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: Brutal.display(size: 20, color: Brutal.paper),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-              ),
+              style: Brutal.body(size: 16, color: Brutal.dim),
             ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(ctx).pop();
                   onConfirm?.call();
                 },
-                child: Text(confirmText),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  color: Colors.red,
+                  alignment: Alignment.center,
+                  child: Text(
+                    confirmText,
+                    style: Brutal.label(size: 13, color: Brutal.paper),
+                  ),
+                ),
               ),
             ),
           ],

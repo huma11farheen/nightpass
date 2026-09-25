@@ -175,39 +175,17 @@ final theme = ThemeData(
     ),
   ),
 
-  // Input Decoration Theme
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true,
-    fillColor: ColorPallete.cardColor,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: ColorPallete.brightPink, width: 2),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Colors.redAccent, width: 1),
-    ),
-    focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Colors.redAccent, width: 2),
-    ),
-    hintStyle: const TextStyle(
-      color: Colors.white38,
-      fontSize: 14,
-    ),
-    labelStyle: const TextStyle(
-      color: Colors.white70,
-      fontSize: 14,
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  // Input Decoration Theme — flat/square to match Brutal design system
+  inputDecorationTheme: const InputDecorationTheme(
+    filled: false,
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
+    hintStyle: TextStyle(color: Colors.white38, fontSize: 14),
+    labelStyle: TextStyle(color: Colors.white70, fontSize: 14),
+    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
   ),
 
   // Icon Theme

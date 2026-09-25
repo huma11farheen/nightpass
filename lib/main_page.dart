@@ -1,10 +1,12 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:clubship/colors.dart';
+import 'package:clubship/design/brutal.dart';
+import 'package:clubship/widgets/common_web_view.dart';
 import 'package:clubship/data/providers/event_repository_provider.dart';
 import 'package:clubship/data/supabase_models/club.dart';
 import 'package:clubship/domain/bottom_navigator_provider.dart';
+import 'package:clubship/my_page/my_page.dart';
 import 'package:clubship/event/event_card.dart';
 import 'package:clubship/event/event_list/event_list_page.dart';
 import 'package:clubship/event/event_view_model.dart';
@@ -114,15 +116,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         );
 
         if (shouldExit == true) {
-          if (Platform.isAndroid) {
-            SystemNavigator.pop();
-          } else if (Platform.isIOS) {
-            exit(0);
-          }
+          SystemNavigator.pop();
         }
       },
       child: Scaffold(
-
+        backgroundColor: Brutal.bg,
         body: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(getEventsProvider);
@@ -133,25 +131,36 @@ class _HomePageState extends ConsumerState<HomePage> {
             controller: _scrollController,
             cacheExtent: 500,
             slivers: [
-              // Premium Header
+              // ── Brutalist Header (search bar + avatar) ───────────────
               SliverToBoxAdapter(
                 child: _PremiumHeader(
                   user: user.value,
                   greeting: _getGreeting(),
                   onProfileTap: () {
-                    ref.read(bottomTabIndex.notifier).setSelectedIndex(3);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPage()));
                   },
                   onSearchTap: () => context.push(Routes.search),
                   onNotificationTap: () => context.push(Routes.notifications),
                 ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
+
+
+
+              // ── Hero section: "Where to tonight?" + ticker + club list ─
+              SliverToBoxAdapter(
+                child: BrutalHeroSection(
+                  onSearchTap: () => context.push(Routes.search),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // ── Featured events carousel ─────────────────────────────
               SliverToBoxAdapter(
                 child: allEvents.when(
                   data: (data) {
-                    print('[FeaturedEvents] fetched ${data.length} events');
                     final featuredEvents = data.take(5).toList();
                     if (featuredEvents.isNotEmpty) {
                       return Column(
@@ -161,14 +170,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ],
                       );
                     }
-                    print('[FeaturedEvents] list is empty, hiding carousel');
                     return const SizedBox.shrink();
                   },
                   loading: () => const SizedBox.shrink(),
-                  error: (err, stack) {
-                    print('[FeaturedEvents] ERROR: $err\n$stack');
-                    return const SizedBox.shrink();
-                  },
+                  error: (_, __) => const SizedBox.shrink(),
                 ),
               ),
 
@@ -199,20 +204,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               const SliverToBoxAdapter(child: ClubMapSection()),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              /// CATEGORY SELECTOR (which updates the event list and scrolls to it)
-              SliverToBoxAdapter(
-                child: CategorySelector(
-                  onTap: (category) {
-                    ref
-                        .read(eventListProvider.notifier)
-                        .getUpcomingEvents(category: category);
-                  },
-                  onCategorySelected: _scrollToEvents,
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 18)),
-
               SliverToBoxAdapter(
                 child: Container(
                   key: _eventsKey,
@@ -234,6 +225,20 @@ class _HomePageState extends ConsumerState<HomePage> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
+              /// CATEGORY SELECTOR — below Upcoming Events header
+              SliverToBoxAdapter(
+                child: CategorySelector(
+                  onTap: (category) {
+                    ref
+                        .read(eventListProvider.notifier)
+                        .getUpcomingEvents(category: category);
+                  },
+                  onCategorySelected: _scrollToEvents,
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
               // Events Grid
               if (eventsProvider.loading)
                 SliverToBoxAdapter(child: EventsGridSkeleton())
@@ -243,9 +248,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.65,
+                      childAspectRatio: 0.78,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),
@@ -266,7 +272,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 100 + MediaQuery.of(context).padding.bottom,
+                ),
+              ),
             ],
           ),
         ),
@@ -295,152 +305,86 @@ class _PremiumHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return RepaintBoundary(
       child: Container(
-        margin: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 8),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: ColorPallete.cardColor.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Profile Avatar with Gradient Border
-                    GestureDetector(
-                      onTap: onProfileTap,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [
-                              ColorPallete.brightPink,
-                              Colors.purple,
-                            ],
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 28,
-                          backgroundColor: ColorPallete.black25,
-                          backgroundImage:
-                          user?.image != null ? NetworkImage(user.image) : null,
-                          child: user?.image == null
-                              ? Icon(
+        color: Brutal.bg,
+        padding: const EdgeInsets.only(top: 54, left: 16, right: 16, bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Square avatar with neon border
+            GestureDetector(
+              onTap: onProfileTap,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Brutal.card,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Brutal.neon(),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: user?.image != null
+                      ? Image.network(
+                          user.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
                             Icons.person,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            size: 28,
-                          )
-                              : null,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    // Greeting and Name
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            greeting,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
+                            color: Brutal.dim,
+                            size: 24,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            user?.name ?? 'Guest',
-                            style: GoogleFonts.outfit(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Notification Bell
-                    GestureDetector(
-                      onTap: onNotificationTap,
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+                        )
+                      : const Icon(
+                          Icons.person,
+                          color: Brutal.dim,
+                          size: 24,
                         ),
-                        child: Icon(
-                          Icons.notifications_outlined,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
+              ),
+            ),
 
-                const SizedBox(height: 16),
+            const SizedBox(width: 14),
 
-                // Full-width Search Bar
-                GestureDetector(
-                  onTap: onSearchTap,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.search,
-                          color: Colors.white.withValues(alpha: 0.6),
-                          size: 18,
-
-                        ),
-
-
-                        const SizedBox(width: 8),
-                        Text(
-                          'Search Venue/Event',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
+            // Greeting + Name
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    greeting.toUpperCase(),
+                    style: Brutal.label(size: 10, color: Brutal.mute),
                   ),
+                  const SizedBox(height: 3),
+                  Text(
+                    user?.name ?? 'Guest',
+                    style: Brutal.display(size: 22, color: Brutal.paper),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+
+            // Notification button — sharp square
+            GestureDetector(
+              onTap: onNotificationTap,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Brutal.card,
+                  border: Border.all(color: Brutal.hairlineColor, width: 1),
                 ),
-              ],
-            )
-          ),
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  color: Brutal.dim,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }
@@ -461,7 +405,7 @@ class _QuickActionCards extends ConsumerWidget {
             subtitle: 'View tickets',
             gradient: LinearGradient(
               colors: [
-                Colors.purple.withValues(alpha: 0.3),
+                Brutal.magenta.withValues(alpha: 0.3),
                 Colors.blue.withValues(alpha: 0.3),
               ],
             ),
