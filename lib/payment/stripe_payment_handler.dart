@@ -69,7 +69,7 @@ class StripePaymentHandler {
           paymentIntentClientSecret: intent.clientSecret,
           style: ThemeMode.dark,
           primaryButtonLabel: 'Pay Now ${formatCurrency(amount.toDouble())}',
-          merchantDisplayName: 'Clubship',
+          merchantDisplayName: 'Nightpass',
           // Enable Google Pay only (Apple Pay disabled - requires merchant identifier)
           googlePay: Platform.isAndroid ? const PaymentSheetGooglePay(
             merchantCountryCode: 'JP',
@@ -114,7 +114,7 @@ class StripePaymentHandler {
         paymentSheetParameters: SetupPaymentSheetParameters(
           setupIntentClientSecret: clientSecret,
           customerId: customerId,
-          merchantDisplayName: 'Clubship',
+          merchantDisplayName: 'Nightpass',
           style: ThemeMode.dark,
           billingDetailsCollectionConfiguration:
               const BillingDetailsCollectionConfiguration(
@@ -163,7 +163,7 @@ class StripePaymentHandler {
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         setupIntentClientSecret: setupIntent.clientSecret,
-        merchantDisplayName: 'Clubship',
+        merchantDisplayName: 'Nightpass',
         customerId: customerId,
         style: ThemeMode.dark,
         appearance: const PaymentSheetAppearance(

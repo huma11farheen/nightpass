@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brutalist Design Reference — Specimen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,400;10..48,600;10..48,800&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,600&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="03-tokens.css">
+<style>
+  body { background: var(--ad-ink-0); color: var(--ad-paper); font-family: var(--ad-font-sans); padding: 48px 32px; max-width: 1200px; margin: 0 auto; }
+  h1 { font-family: var(--ad-font-display); font-size: 72px; font-weight: 800; letter-spacing: -0.04em; line-height: 0.85; }
+  h2 { font-family: var(--ad-font-display); font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 0.9; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--ad-paper); }
+  h3 { font-family: var(--ad-font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 24px 0 12px; }
+  p { line-height: 1.4; max-width: 60ch; color: var(--ad-paper-dim); }
+  .ml { font-family: var(--ad-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ad-paper-mute); }
+  .grid { display: grid; gap: 12px; margin: 16px 0 32px; }
+  .swatches { grid-template-columns: repeat(6, 1fr); }
+  .swatch { aspect-ratio: 1.2/1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; border: var(--ad-border-hairline); }
+  .swatch .name { font-family: var(--ad-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .swatch .hex { font-family: var(--ad-font-mono); font-size: 11px; font-weight: 700; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding: 14px 0; border-top: var(--ad-border-hairline); }
+  .type-row .meta { font-family: var(--ad-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ad-paper-mute); width: 220px; flex-shrink: 0; }
+  .type-row .sample { color: var(--ad-paper); }
+  .ticker-demo { background: var(--ad-neon); color: var(--ad-ink-0); padding: 6px 0; margin: 16px 0; overflow: hidden; }
+  .ticker-demo .inner { display: flex; white-space: nowrap; animation: ad-tick 30s linear infinite; font-family: var(--ad-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .ticker-demo span { padding: 0 24px; }
+  .components { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .demo { padding: 24px; border: var(--ad-border-hairline); }
+  .demo .label { font-family: var(--ad-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ad-paper-mute); margin-bottom: 16px; }
+  .btn-primary { background: var(--ad-neon); color: var(--ad-ink-0); padding: 14px 20px; border: none; font-family: var(--ad-font-sans); font-size: 16px; font-weight: 700; cursor: pointer; }
+  .btn-acid { background: var(--ad-acid); color: var(--ad-ink-0); padding: 14px 20px; border: none; font-family: var(--ad-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+  .btn-ghost { background: transparent; color: var(--ad-paper); padding: 14px 20px; border: 1px solid var(--ad-paper); font-family: var(--ad-font-sans); font-size: 16px; font-weight: 600; cursor: pointer; }
+  .chip { display: inline-block; padding: 8px 14px; border: 1px solid rgba(244,241,234,0.14); font-family: var(--ad-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ad-paper-dim); }
+  .chip.active { background: var(--ad-acid); color: var(--ad-ink-0); border-color: var(--ad-acid); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ad-neon); display: inline-block; animation: pulse 1.6s ease-in-out infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .event-row { display: grid; grid-template-columns: 60px 1fr auto; gap: 14px; padding: 14px 0; border-top: 2px solid var(--ad-paper); align-items: center; }
+  .event-row .day { border-right: 2px solid var(--ad-neon); padding-right: 10px; }
+  .event-row .day-label { font-family: var(--ad-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--ad-neon); }
+  .event-row .day-num { font-family: var(--ad-font-display); font-size: 24px; font-weight: 800; line-height: 1; }
+  .event-row .title { font-size: 16px; font-weight: 600; }
+  .event-row .meta { font-family: var(--ad-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ad-paper-mute); }
+  .event-row .price { font-family: var(--ad-font-display); font-size: 20px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="ml">SECTION 01 · BRUTALIST SPECIMEN</div>
+<h1>Where to<br><span style="color:var(--ad-neon)">tonight?</span></h1>
+<p style="margin-top:24px"><span style="font-family:var(--ad-font-serif);font-style:italic">A specimen page for </span> the After/Dark brutalist design system. Open the markdown files alongside this for full specs.</p>
+
+<h2>Color</h2>
+<h3>Ink (surfaces)</h3>
+<div class="grid swatches">
+  <div class="swatch" style="background:#050505"><span class="name" style="color:#F4F1EA">INK 0</span><span class="hex" style="color:#7A7770">#050505</span></div>
+  <div class="swatch" style="background:#0A0A0B"><span class="name" style="color:#F4F1EA">INK 1</span><span class="hex" style="color:#7A7770">#0A0A0B</span></div>
+  <div class="swatch" style="background:#121214"><span class="name" style="color:#F4F1EA">INK 2</span><span class="hex" style="color:#7A7770">#121214</span></div>
+  <div class="swatch" style="background:#1A1A1D"><span class="name" style="color:#F4F1EA">INK 3</span><span class="hex" style="color:#7A7770">#1A1A1D</span></div>
+  <div class="swatch" style="background:#242428"><span class="name" style="color:#F4F1EA">INK 4</span><span class="hex" style="color:#B8B4AC">#242428</span></div>
+  <div class="swatch" style="background:#3A3A40"><span class="name" style="color:#F4F1EA">INK 5</span><span class="hex" style="color:#B8B4AC">#3A3A40</span></div>
+</div>
+
+<h3>Paper (text)</h3>
+<div class="grid swatches">
+  <div class="swatch" style="background:#F4F1EA"><span class="name" style="color:#050505">PAPER</span><span class="hex" style="color:#050505">#F4F1EA</span></div>
+  <div class="swatch" style="background:#B8B4AC"><span class="name" style="color:#050505">PAPER · DIM</span><span class="hex" style="color:#050505">#B8B4AC</span></div>
+  <div class="swatch" style="background:#7A7770"><span class="name" style="color:#F4F1EA">PAPER · MUTE</span><span class="hex" style="color:#F4F1EA">#7A7770</span></div>
+</div>
+
+<h3>Accents</h3>
+<div class="grid swatches">
+  <div class="swatch" style="background:#FF1FA3"><span class="name" style="color:#050505">NEON</span><span class="hex" style="color:#050505">#FF1FA3</span></div>
+  <div class="swatch" style="background:#FF4DC0"><span class="name" style="color:#050505">NEON · HOT</span><span class="hex" style="color:#050505">#FF4DC0</span></div>
+  <div class="swatch" style="background:#C41284"><span class="name" style="color:#F4F1EA">NEON · DEEP</span><span class="hex" style="color:#F4F1EA">#C41284</span></div>
+  <div class="swatch" style="background:#E6FF3A"><span class="name" style="color:#050505">ACID</span><span class="hex" style="color:#050505">#E6FF3A</span></div>
+  <div class="swatch" style="background:#6DF7FF"><span class="name" style="color:#050505">CYAN</span><span class="hex" style="color:#050505">#6DF7FF</span></div>
+  <div class="swatch" style="background:transparent;border:1px dashed var(--ad-paper-mute)"><span class="name" style="color:#F4F1EA">— END —</span></div>
+</div>
+
+<h2>Type</h2>
+<div class="type-row">
+  <div class="meta">HERO · BRICOLAGE 92 / 800 / -0.04em</div>
+  <div class="sample" style="font-family:var(--ad-font-display);font-size:72px;font-weight:800;letter-spacing:-0.04em;line-height:0.85">After/Dark</div>
+</div>
+<div class="type-row">
+  <div class="meta">TITLE · BRICOLAGE 44 / 800</div>
+  <div class="sample" style="font-family:var(--ad-font-display);font-size:44px;font-weight:800;letter-spacing:-0.03em;line-height:0.9">Tonight in Tokyo</div>
+</div>
+<div class="type-row">
+  <div class="meta">SECTION · BRICOLAGE 26 / 700</div>
+  <div class="sample" style="font-family:var(--ad-font-display);font-size:26px;font-weight:700">This week</div>
+</div>
+<div class="type-row">
+  <div class="meta">BODY LG · INTER TIGHT 16 / 500</div>
+  <div class="sample" style="font-size:16px;font-weight:500">Doors at 22:00 · ¥3000 · Baia Shibuya</div>
+</div>
+<div class="type-row">
+  <div class="meta">BODY · INTER TIGHT 14 / 500</div>
+  <div class="sample" style="font-size:14px;font-weight:500;color:var(--ad-paper-dim)">Honey Dijon brings 4 hours of body music to the basement. Late set, vinyl-only, no phones.</div>
+</div>
+<div class="type-row">
+  <div class="meta">SERIF ITALIC · FRAUNCES 18 / 400</div>
+  <div class="sample" style="font-family:var(--ad-font-serif);font-style:italic;font-size:18px;color:var(--ad-paper-dim)">feat. honey dijon</div>
+</div>
+<div class="type-row">
+  <div class="meta">MONO LABEL · JETBRAINS 11 / 700 / 0.12em</div>
+  <div class="sample ml" style="font-size:11px">TONIGHT · 14 OPEN · DOORS 22:00</div>
+</div>
+
+<h2>Components</h2>
+
+<div class="ticker-demo">
+  <div class="inner">
+    <span>TICKETS MOVING FAST</span><span>·</span><span>YONAGUNI 62%</span><span>·</span><span>MODULE SOLD OUT</span><span>·</span><span>CONTACT 80%</span><span>·</span><span>VENT 41%</span><span>·</span>
+    <span>TICKETS MOVING FAST</span><span>·</span><span>YONAGUNI 62%</span><span>·</span><span>MODULE SOLD OUT</span><span>·</span><span>CONTACT 80%</span><span>·</span><span>VENT 41%</span><span>·</span>
+  </div>
+</div>
+
+<div class="components">
+  <div class="demo">
+    <div class="label">BUTTONS</div>
+    <div class="row">
+      <button class="btn-primary">Buy · ¥3000</button>
+      <button class="btn-acid">TONIGHT ONLY</button>
+      <button class="btn-ghost">Maybe</button>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="label">CHIPS · FILTERS</div>
+    <div class="row">
+      <span class="chip active">ALL</span>
+      <span class="chip">LATIN</span>
+      <span class="chip">TECHNO</span>
+      <span class="chip">HOUSE</span>
+      <span class="chip">JAZZ</span>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="label">STATUS LABELS</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="ml" style="color:var(--ad-neon)"><span class="dot"></span>LIVE · 124 INSIDE WOMB</div>
+      <div class="ml" style="color:var(--ad-acid)">★ TONIGHT · 14 OPEN</div>
+      <div class="ml">DOORS 22:00 · LATE 06:00</div>
+      <div class="ml" style="color:var(--ad-paper-mute)">SOLD OUT</div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="label">EDITORIAL ACCENTS</div>
+    <div style="font-family:var(--ad-font-display);font-size:32px;font-weight:800;letter-spacing:-0.03em;line-height:0.95">
+      Yonaguni Fiesta<br>
+      <span style="font-family:var(--ad-font-serif);font-style:italic;font-weight:400;font-size:20px;color:var(--ad-paper-dim)">a night by</span>
+      <span style="font-style:italic;font-family:var(--ad-font-serif);font-weight:600;font-size:24px">audio garden</span>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:48px">Event row</h3>
+<div class="event-row">
+  <div class="day">
+    <div class="day-label">SAT</div>
+    <div class="day-num">25</div>
+  </div>
+  <div>
+    <div class="title">Yonaguni Fiesta</div>
+    <div class="meta">BAIA SHIBUYA · OPEN</div>
+  </div>
+  <div class="price">¥2000</div>
+</div>
+<div class="event-row" style="border-top: 1px solid rgba(244,241,234,0.08)">
+  <div class="day" style="border-right-color: var(--ad-acid)">
+    <div class="day-label" style="color:var(--ad-acid)">SUN</div>
+    <div class="day-num">26</div>
+  </div>
+  <div>
+    <div class="title">Vinyl Vault Vol. 12</div>
+    <div class="meta">WOMB · DOORS 23:00</div>
+  </div>
+  <div class="price">¥2800</div>
+</div>
+<div class="event-row" style="border-top: 1px solid rgba(244,241,234,0.08)">
+  <div class="day" style="border-right-color: var(--ad-cyan)">
+    <div class="day-label" style="color:var(--ad-cyan)">TUE</div>
+    <div class="day-num">28</div>
+  </div>
+  <div>
+    <div class="title">Techno Warsaw</div>
+    <div class="meta">MODULE · LATE</div>
+  </div>
+  <div class="price">¥3500</div>
+</div>
+
+<h2>Voice</h2>
+<div class="components">
+  <div class="demo">
+    <div class="label">DON'T</div>
+    <p style="color:var(--ad-paper-dim);font-style:italic">"Welcome back! 🎉 We've got 14 amazing venues open for you tonight. Get your tickets now before they sell out!"</p>
+  </div>
+  <div class="demo" style="border-color:var(--ad-neon);border-width:2px">
+    <div class="label" style="color:var(--ad-neon)">DO</div>
+    <p style="color:var(--ad-paper)">Back already.<br>14 open. Doors 22:00.<br>Yonaguni at 62%.</p>
+  </div>
+</div>
+
+<p style="margin-top:64px;text-align:center" class="ml">— END SPECIMEN —</p>
+
+</body>
+</html>

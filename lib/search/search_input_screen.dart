@@ -1,3 +1,5 @@
+import 'package:clubship/widgets/back_button.dart';
+import 'package:clubship/design/brutal.dart';
 import 'dart:ui';
 
 import 'package:clubship/colors.dart';
@@ -36,10 +38,7 @@ class _SearchInputScreenState extends ConsumerState<SearchInputScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const AppBackButton(forAppBar: true),
         title: Text(
           'Search',
           style: GoogleFonts.outfit(
@@ -187,7 +186,7 @@ class SearchHistoryList extends ConsumerWidget {
                         gradient: LinearGradient(
                           colors: [
                             ColorPallete.brightPink.withValues(alpha: 0.2),
-                            Colors.purple.withValues(alpha: 0.2),
+                            Brutal.magenta.withValues(alpha: 0.2),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),

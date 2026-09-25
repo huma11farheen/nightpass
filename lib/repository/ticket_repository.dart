@@ -125,6 +125,8 @@ class TicketRepository {
     required List<String> femaleList,
     required List<String> maleList,
     bool skipGuestlist = false,
+    int freeFemaleDrinkTickets = 0,
+    int freeMaleDrinkTickets = 0,
   }) async {
     try {
       await SupabaseFunctions.of(supabase).invoke('buy-ticket', body: {
@@ -135,6 +137,8 @@ class TicketRepository {
         'femaleAttendee': femaleList,
         'maleAttendee': maleList,
         'skipGuestlist': skipGuestlist,
+        'freeFemaleDrinkTickets': freeFemaleDrinkTickets,
+        'freeMaleDrinkTickets': freeMaleDrinkTickets,
       });
       return ApiResult.success;
     } catch (e) {

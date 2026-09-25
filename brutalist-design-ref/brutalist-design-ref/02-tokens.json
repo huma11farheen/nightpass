@@ -1,0 +1,112 @@
+{
+  "$schema": "https://schemas.figma.com/tokens/v1.0.0",
+  "color": {
+    "ink": {
+      "0":  { "value": "#050505", "description": "Page background — pure black" },
+      "1":  { "value": "#0A0A0B", "description": "Surface base" },
+      "2":  { "value": "#121214", "description": "Card surface" },
+      "3":  { "value": "#1A1A1D", "description": "Elevated surface" },
+      "4":  { "value": "#242428", "description": "Hover state" },
+      "5":  { "value": "#3A3A40", "description": "Border / separator on dark" }
+    },
+    "paper": {
+      "default": { "value": "#F4F1EA", "description": "Primary text on dark" },
+      "dim":     { "value": "#B8B4AC", "description": "Secondary text" },
+      "mute":    { "value": "#7A7770", "description": "Tertiary / mono labels" }
+    },
+    "accent": {
+      "neon":      { "value": "#FF1FA3", "description": "Primary — magenta" },
+      "neon-hot":  { "value": "#FF4DC0", "description": "Hover state" },
+      "neon-deep": { "value": "#C41284", "description": "Pressed / active" },
+      "acid":      { "value": "#E6FF3A", "description": "Secondary — yellow" },
+      "cyan":      { "value": "#6DF7FF", "description": "Tertiary — cyan" }
+    },
+    "semantic": {
+      "live":    { "value": "#FF1FA3" },
+      "soldOut": { "value": "#7A7770" },
+      "warning": { "value": "#E6FF3A" },
+      "info":    { "value": "#6DF7FF" }
+    }
+  },
+  "font": {
+    "family": {
+      "display": { "value": "'Bricolage Grotesque', 'Archivo', sans-serif" },
+      "sans":    { "value": "'Inter Tight', 'Inter', system-ui, sans-serif" },
+      "serif":   { "value": "'Fraunces', 'Playfair Display', Georgia, serif" },
+      "mono":    { "value": "'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace" }
+    },
+    "weight": {
+      "regular":  { "value": 400 },
+      "medium":   { "value": 500 },
+      "semibold": { "value": 600 },
+      "bold":     { "value": 700 },
+      "black":    { "value": 800 }
+    },
+    "size": {
+      "hero":      { "value": "92px", "description": "Display hero" },
+      "display":   { "value": "72px" },
+      "title":     { "value": "44px" },
+      "section":   { "value": "26px" },
+      "body-lg":   { "value": "16px" },
+      "body":      { "value": "14px" },
+      "body-sm":   { "value": "13px" },
+      "label":     { "value": "11px", "description": "Mono uppercase label" },
+      "label-sm":  { "value": "10px" }
+    },
+    "tracking": {
+      "tight":   { "value": "-0.04em", "description": "Display type" },
+      "normal":  { "value": "0" },
+      "label":   { "value": "0.08em" },
+      "labelLg": { "value": "0.12em" }
+    },
+    "leading": {
+      "display": { "value": "0.85" },
+      "title":   { "value": "0.9" },
+      "body":    { "value": "1.4" },
+      "label":   { "value": "1" }
+    }
+  },
+  "space": {
+    "0":  { "value": "0" },
+    "1":  { "value": "2px" },
+    "2":  { "value": "4px" },
+    "3":  { "value": "8px" },
+    "4":  { "value": "12px" },
+    "5":  { "value": "16px" },
+    "6":  { "value": "20px" },
+    "7":  { "value": "24px" },
+    "8":  { "value": "32px" },
+    "9":  { "value": "48px" },
+    "10": { "value": "64px" },
+    "11": { "value": "96px" }
+  },
+  "radius": {
+    "none": { "value": "0", "description": "Default — sharp corners" },
+    "xs":   { "value": "2px", "description": "Maximum allowed radius" }
+  },
+  "border": {
+    "hairline": { "value": "1px solid rgba(244, 241, 234, 0.08)" },
+    "default":  { "value": "1px solid #1A1A1D" },
+    "emphasis": { "value": "2px solid #FF1FA3" },
+    "paper":    { "value": "1px solid #F4F1EA" }
+  },
+  "motion": {
+    "duration": {
+      "instant": { "value": "80ms" },
+      "fast":    { "value": "150ms" },
+      "base":    { "value": "240ms" },
+      "slow":    { "value": "400ms" },
+      "ticker":  { "value": "40s", "description": "Marquee scroll" }
+    },
+    "easing": {
+      "out":   { "value": "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+      "in":    { "value": "cubic-bezier(0.4, 0, 1, 1)" },
+      "inOut": { "value": "cubic-bezier(0.4, 0, 0.2, 1)" },
+      "linear":{ "value": "linear", "description": "For ticker only" }
+    }
+  },
+  "elevation": {
+    "none":   { "value": "none", "description": "Default — no shadow" },
+    "neon":   { "value": "0 0 24px rgba(255,31,163,0.45), 0 0 48px rgba(255,31,163,0.2)", "description": "Reserved for hero CTA only" }
+  }
+}

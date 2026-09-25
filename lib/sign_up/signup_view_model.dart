@@ -12,12 +12,24 @@ class SignUpStateNotifier extends StateNotifier<SignUpState> {
 
   Future<SignUpResult> signup() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-
     final status = await userRepository.signUpWithEmailAndPassword(state);
-    state = state.copyWith(
-      isLoading: false,
-    );
+    state = state.copyWith(isLoading: false);
     return status;
+  }
+
+  // Returns null on success, error message on failure.
+  Future<String?> signUpAndSendOtp() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    final error = await userRepository.signUpAndSendOtp(state);
+    state = state.copyWith(isLoading: false);
+    return error;
+  }
+
+  Future<String?> verifyOtpAndCreate(String otp) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    final error = await userRepository.verifySignupOtpAndCreateProfile(state, otp);
+    state = state.copyWith(isLoading: false);
+    return error;
   }
 
   void validate() {

@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
@@ -124,8 +125,32 @@ String formatEventDate(DateTime date) {
   return '$dayWithSuffix $month';
 }
 
-bool isClubOpen(String openingTime, String closingTime) {
+bool isClubOpen(String openingTime, String closingTime, [List<String>? workingDay]) {
   final now = DateTime.now();
+
+  // Check working day when provided — nightclubs that open after midnight (e.g.,
+  // 22:00 Fri → 05:00 Sat) are listed under the day they *open*, so we must also
+  // accept "yesterday" as a valid working day for early-morning hours.
+  if (workingDay != null && workingDay.isNotEmpty) {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const abbrevs = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    final todayIndex = now.weekday - 1; // 0=Mon … 6=Sun
+    final todayFull = days[todayIndex];
+    final todayAbbrev = abbrevs[todayIndex];
+    final yesterdayIndex = (todayIndex - 1 + 7) % 7;
+    final yesterdayFull = days[yesterdayIndex];
+    final yesterdayAbbrev = abbrevs[yesterdayIndex];
+
+    bool matchesDay(String d, String full, String abbrev) {
+      final lower = d.toLowerCase();
+      return lower == full || lower == abbrev;
+    }
+
+    final worksToday = workingDay.any((d) => matchesDay(d, todayFull, todayAbbrev));
+    final worksYesterday = workingDay.any((d) => matchesDay(d, yesterdayFull, yesterdayAbbrev));
+    if (!worksToday && !worksYesterday) return false;
+  }
+
   final openParts = getHourAndMinute(openingTime);
   final closeParts = getHourAndMinute(closingTime);
 
@@ -147,11 +172,11 @@ bool isClubOpen(String openingTime, String closingTime) {
 
   // Handle clubs that close after midnight (e.g., 22:00–05:00)
   if (todayClosing.isBefore(todayOpening)) {
-    // If current time is before closing time, the club opened yesterday
     if (now.isBefore(todayClosing)) {
+      // It's early morning — the club opened yesterday
       todayOpening = todayOpening.subtract(const Duration(days: 1));
     } else {
-      // Otherwise, it will close tomorrow
+      // It hasn't opened yet today — it will close tomorrow
       todayClosing = todayClosing.add(const Duration(days: 1));
     }
   }

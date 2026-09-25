@@ -1,0 +1,142 @@
+/* ============================================================
+   Brutalist Design Reference — CSS Tokens
+   Drop this into your global stylesheet. All tokens use the
+   `--ad-` prefix to avoid collisions.
+   ============================================================ */
+
+:root {
+  /* ── Color · Ink (dark surfaces) ───────────────────────── */
+  --ad-ink-0: #050505;
+  --ad-ink-1: #0A0A0B;
+  --ad-ink-2: #121214;
+  --ad-ink-3: #1A1A1D;
+  --ad-ink-4: #242428;
+  --ad-ink-5: #3A3A40;
+
+  /* ── Color · Paper (text on dark) ──────────────────────── */
+  --ad-paper:      #F4F1EA;
+  --ad-paper-dim:  #B8B4AC;
+  --ad-paper-mute: #7A7770;
+
+  /* ── Color · Accents ───────────────────────────────────── */
+  --ad-neon:      #FF1FA3;   /* primary magenta */
+  --ad-neon-hot:  #FF4DC0;   /* hover */
+  --ad-neon-deep: #C41284;   /* pressed */
+  --ad-acid:      #E6FF3A;   /* secondary yellow */
+  --ad-cyan:      #6DF7FF;   /* tertiary */
+
+  /* ── Color · Semantic ──────────────────────────────────── */
+  --ad-live:     var(--ad-neon);
+  --ad-sold-out: var(--ad-paper-mute);
+  --ad-warning:  var(--ad-acid);
+  --ad-info:     var(--ad-cyan);
+
+  /* ── Type families ─────────────────────────────────────── */
+  --ad-font-display: 'Bricolage Grotesque', 'Archivo', sans-serif;
+  --ad-font-sans:    'Inter Tight', 'Inter', system-ui, sans-serif;
+  --ad-font-serif:   'Fraunces', 'Playfair Display', Georgia, serif;
+  --ad-font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* ── Type sizes ────────────────────────────────────────── */
+  --ad-size-hero:     92px;
+  --ad-size-display:  72px;
+  --ad-size-title:    44px;
+  --ad-size-section:  26px;
+  --ad-size-body-lg:  16px;
+  --ad-size-body:     14px;
+  --ad-size-body-sm:  13px;
+  --ad-size-label:    11px;
+  --ad-size-label-sm: 10px;
+
+  /* ── Type tracking ─────────────────────────────────────── */
+  --ad-tracking-tight:    -0.04em;
+  --ad-tracking-normal:   0;
+  --ad-tracking-label:    0.08em;
+  --ad-tracking-label-lg: 0.12em;
+
+  /* ── Type leading ──────────────────────────────────────── */
+  --ad-leading-display: 0.85;
+  --ad-leading-title:   0.9;
+  --ad-leading-body:    1.4;
+  --ad-leading-label:   1;
+
+  /* ── Spacing (4-pt step base) ──────────────────────────── */
+  --ad-space-0:  0;
+  --ad-space-1:  2px;
+  --ad-space-2:  4px;
+  --ad-space-3:  8px;
+  --ad-space-4:  12px;
+  --ad-space-5:  16px;
+  --ad-space-6:  20px;
+  --ad-space-7:  24px;
+  --ad-space-8:  32px;
+  --ad-space-9:  48px;
+  --ad-space-10: 64px;
+  --ad-space-11: 96px;
+
+  /* ── Radius (sharp corners) ────────────────────────────── */
+  --ad-radius-none: 0;
+  --ad-radius-xs:   2px;
+
+  /* ── Borders ───────────────────────────────────────────── */
+  --ad-border-hairline: 1px solid rgba(244, 241, 234, 0.08);
+  --ad-border-default:  1px solid var(--ad-ink-3);
+  --ad-border-emphasis: 2px solid var(--ad-neon);
+  --ad-border-paper:    1px solid var(--ad-paper);
+
+  /* ── Motion ────────────────────────────────────────────── */
+  --ad-dur-instant: 80ms;
+  --ad-dur-fast:    150ms;
+  --ad-dur-base:    240ms;
+  --ad-dur-slow:    400ms;
+  --ad-dur-ticker:  40s;
+
+  --ad-ease-out:    cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ad-ease-in:     cubic-bezier(0.4, 0, 1, 1);
+  --ad-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Elevation (used sparingly) ────────────────────────── */
+  --ad-elev-none: none;
+  --ad-elev-neon: 0 0 24px rgba(255, 31, 163, 0.45),
+                  0 0 48px rgba(255, 31, 163, 0.20);
+}
+
+/* ============================================================
+   Base utility classes (optional)
+   ============================================================ */
+
+.ad-display {
+  font-family: var(--ad-font-display);
+  font-weight: 800;
+  letter-spacing: var(--ad-tracking-tight);
+  line-height: var(--ad-leading-display);
+}
+
+.ad-serif-italic {
+  font-family: var(--ad-font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.ad-mono-label {
+  font-family: var(--ad-font-mono);
+  font-size: var(--ad-size-label);
+  font-weight: 700;
+  letter-spacing: var(--ad-tracking-label-lg);
+  text-transform: uppercase;
+  color: var(--ad-paper-mute);
+}
+
+.ad-hairline { border-top: var(--ad-border-hairline); }
+.ad-glow-neon { box-shadow: var(--ad-elev-neon); }
+
+/* Marquee ticker */
+@keyframes ad-tick {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ad-ticker {
+  display: flex;
+  white-space: nowrap;
+  animation: ad-tick var(--ad-dur-ticker) linear infinite;
+}

@@ -154,7 +154,7 @@ class NearbyClubs extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemBuilder: (context, index) {
                   final club = clubs[index];
-                  final isOpen = isClubOpen(club.openingTime, club.closingTime);
+                  final isOpen = isClubOpen(club.openingTime, club.closingTime, club.workingDay);
                   final shortAddress =
                       getFirstThreeWords(clubs[index].locationAddress);
                   return Padding(

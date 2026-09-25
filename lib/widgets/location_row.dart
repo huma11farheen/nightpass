@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 
 class LocationDetailsRow extends StatelessWidget {
@@ -9,7 +10,7 @@ class LocationDetailsRow extends StatelessWidget {
       children: [
         Icon(
           Icons.pin_drop_sharp,
-          color: Colors.purple,
+          color: Brutal.magenta,
           size: 20,
           weight: 2,
         ),

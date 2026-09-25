@@ -6,11 +6,11 @@ class ColorPallete {
   static const backgroundcolor = Color(0xFF1A1625);
   static const backgroundcolor3 = Color(0xFF4D3C74);
   static const backgroundcolor2 = Color(0xFF7545D9);
-  static const icon = Color(0xFFFF10F0);
-  static const colorCard1 = Color(0xFFFF10F0);
-  static const colorCard2 = Color(0xFF4D3C74);
+  static const icon =Color(0xFFFF4882);
+  static const colorCard1 = Color(0xFFFF4882);
+  static const colorCard2 =Color(0xFFFF4882);
   static const deepPurple = Color(0xFF51135C);
-  static const brightPink = Color(0xFFFF10F0);
+  static const brightPink = Color(0xFFFF4882);
   static const black10 = Color(0xFF333333);
   static const grey10 = Color(0xFF4A4A4A);
   static const black25 = Color(0xFF262626);

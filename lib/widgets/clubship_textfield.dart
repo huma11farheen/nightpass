@@ -1,4 +1,4 @@
-import 'package:clubship/colors.dart';
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -77,87 +77,63 @@ class _ClubTextFieldState extends State<ClubTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 4),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Color(0xFF1C1C22),
-
-              //ColorPallete.backgroundcolor3.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _isFocused
-                    ? ColorPallete.brightPink.withValues(alpha: 0.6)
-                    : Colors.white.withValues(alpha: 0.1),
-                width: _isFocused ? 1.5 : 1.0,
-              ),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Brutal.elevated,
+            border: Border.all(
+              color: _isFocused ? Brutal.magenta : Brutal.hairlineColor,
+              width: _isFocused ? 1.5 : 1.0,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: TextFormField(
-                focusNode: _internalFocusNode,
-                autofocus: widget.autofocus,
-                controller: widget.controller,
-                onTap: () {
-                  widget.onTap?.call();
-                },
-                textAlignVertical: TextAlignVertical.center,
-                initialValue: widget.controller == null ? widget.initialText : null,
-                autofillHints: const [],
-                maxLines: widget.maxlines,
-                keyboardType: widget.type,
-                validator: widget.validator,
-                inputFormatters: widget.isNameField
-                    ? [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-                      ]
-                    : null,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                cursorColor: ColorPallete.brightPink,
-                onFieldSubmitted: widget.onSubmitted,
-                onChanged: widget.onChanged,
-                obscureText: widget.isPassword ?? false,
-                decoration: InputDecoration(
-                  alignLabelWithHint: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  hintMaxLines: 1,
-                  hintText: widget.hintText,
-                  hintStyle: TextStyle(
-                    fontSize: 15,
-                    color: Colors.white.withValues(alpha: 0.4),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+          ),
+          child: TextFormField(
+            focusNode: _internalFocusNode,
+            autofocus: widget.autofocus,
+            controller: widget.controller,
+            onTap: widget.onTap,
+            textAlignVertical: TextAlignVertical.center,
+            initialValue:
+                widget.controller == null ? widget.initialText : null,
+            autofillHints: const [],
+            maxLines: widget.maxlines,
+            keyboardType: widget.type,
+            validator: widget.validator,
+            inputFormatters: widget.isNameField
+                ? [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))]
+                : null,
+            style: Brutal.body(size: 17, color: Brutal.paper),
+            cursorColor: Brutal.magenta,
+            onFieldSubmitted: widget.onSubmitted,
+            onChanged: widget.onChanged,
+            obscureText: widget.isPassword ?? false,
+            decoration: InputDecoration(
+              filled: false,
+              alignLabelWithHint: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
               ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              hintMaxLines: 1,
+              hintText: widget.hintText,
+              hintStyle: Brutal.body(size: 17, color: Brutal.mute),
+              prefixIcon: widget.icon != null
+                  ? Icon(widget.icon, color: Brutal.mute, size: 18)
+                  : null,
             ),
           ),
         ),
 
         if (widget.errorText != null)
           Padding(
-            padding: const EdgeInsets.only(left: 20, top: 6),
+            padding: const EdgeInsets.only(left: 4, top: 6),
             child: Text(
               widget.errorText!,
-              style: const TextStyle(
-                color: ColorPallete.brightPink,
-
-
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+              style: Brutal.label(size: 11, color: Brutal.magenta),
             ),
           ),
       ],

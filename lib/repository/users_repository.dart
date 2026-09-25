@@ -111,6 +111,58 @@ class UserRepository {
     }
   }
 
+  // Step 1 of OTP signup: register the user (Supabase sends a 6-digit OTP to email).
+  // Returns null on success or an error message string.
+  Future<String?> signUpAndSendOtp(SignUpState profile) async {
+    try {
+      final result = await supabase.auth.signUp(
+        email: profile.email!,
+        password: profile.password!,
+      );
+      if (result.user == null) return 'Could not create account. Please try again.';
+      if (result.user?.identities?.isEmpty ?? false) {
+        return 'This email is already registered. Please sign in.';
+      }
+      return null;
+    } on AuthException catch (e) {
+      if (e.message.contains('already registered') || e.message.contains('already been registered')) {
+        return 'This email is already registered. Please sign in.';
+      }
+      if (e.message.contains('invalid') || e.statusCode == '400') {
+        return 'Please enter a valid email address.';
+      }
+      if (e.message.contains('Password') || e.statusCode == '422') {
+        return 'Password must be at least 6 characters.';
+      }
+      if (e.statusCode == '429') return 'Too many attempts. Please try again later.';
+      return e.message;
+    } catch (e) {
+      return 'An error occurred. Please try again.';
+    }
+  }
+
+  // Step 2 of OTP signup: verify the 6-digit code and create the DB profile.
+  // Returns null on success or an error message string.
+  Future<String?> verifySignupOtpAndCreateProfile(SignUpState profile, String otp) async {
+    try {
+      await supabase.auth.verifyOTP(
+        email: profile.email!,
+        token: otp,
+        type: OtpType.signup,
+      );
+      final user = supabase.auth.currentUser;
+      if (user == null) return 'Verification failed. Please try again.';
+      await createProfile(profile, user.id);
+      return null;
+    } on AuthException catch (e) {
+      return e.message.contains('expired') || e.message.contains('invalid')
+          ? 'Invalid or expired code. Please try again.'
+          : e.message;
+    } catch (e) {
+      return 'Verification failed. Please try again.';
+    }
+  }
+
   Future<SignUpResult> signUpWithEmailAndPassword(SignUpState profile) async {
     try {
       final result = await supabase.auth.signUp(

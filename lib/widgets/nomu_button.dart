@@ -1,3 +1,4 @@
+import 'package:clubship/design/brutal.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -95,8 +96,8 @@ class NomuButton extends StatelessWidget {
       fontSize: 17,
       fontWeight: FontWeight.w400,
       isEnabled: isEnabled,
-      backgroundColor: Colors.purpleAccent,
-      disabledBackgroundColor: Colors.purpleAccent.withValues(alpha: 0.8),
+      backgroundColor: Brutal.magenta,
+      disabledBackgroundColor: Brutal.magenta.withValues(alpha: 0.8),
       icon: icon,
       isLoading: isLoading,
       isPersistentFooterButton: isPersistentFooterButton,

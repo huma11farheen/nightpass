@@ -1,20 +1,15 @@
-import 'dart:ui';
-import 'package:clubship/colors.dart';
+import 'package:clubship/design/brutal.dart';
 import 'package:clubship/drink_tickets/purchased_drink_tickets.dart';
 import 'package:clubship/send_tickets/provider/send_drink_ticket_view_model.dart';
 import 'package:clubship/send_tickets/user_tile.dart';
+import 'package:clubship/widgets/back_button.dart';
 import 'package:clubship/widgets/pop_up.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SendDrinkTickets extends ConsumerStatefulWidget {
-  const SendDrinkTickets({
-    super.key,
-    required this.ticketId,
-  });
-
+  const SendDrinkTickets({super.key, required this.ticketId});
   final String ticketId;
 
   @override
@@ -25,6 +20,14 @@ class _SendDrinkTicketsState extends ConsumerState<SendDrinkTickets> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(sendDrinkTicketViewModel.notifier).reset();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -32,452 +35,190 @@ class _SendDrinkTicketsState extends ConsumerState<SendDrinkTickets> {
 
   @override
   Widget build(BuildContext context) {
-    final searchUserProvider = ref.watch(sendDrinkTicketViewModel);
+    final state = ref.watch(sendDrinkTicketViewModel);
     final notifier = ref.read(sendDrinkTicketViewModel.notifier);
-    final users = searchUserProvider.users;
-    final selectedUser = searchUserProvider.selectedUser;
+    final users = state.users;
+    final selectedUser = state.selectedUser;
+    final topPad = MediaQuery.of(context).padding.top;
+    final botPad = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
-      body: Stack(
+      backgroundColor: Brutal.bg,
+      body: Column(
         children: [
-          // Background gradient
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF1A1A2E),
-                    const Color(0xFF0F0F1E),
+          Container(
+            color: Brutal.bg,
+            padding: EdgeInsets.fromLTRB(20, topPad + 12, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const AppBackButton(),
+                    const SizedBox(width: 14),
+                    Text('Send Drink Ticket',
+                        style: Brutal.display(size: 22, color: Brutal.paper)),
                   ],
                 ),
-              ),
-            ),
-          ),
-
-          // Content
-          Column(
-            children: [
-              // Premium Header
-              Container(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 8,
-                  left: 16,
-                  right: 16,
-                  bottom: 20,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF1A1A2E).withValues(alpha: 0.95),
-                      const Color(0xFF16213E).withValues(alpha: 0.95),
-                    ],
+                const SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Brutal.elevated,
+                    border: Border.all(color: Brutal.hairlineColor),
                   ),
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      width: 1,
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (v) => notifier.getUsers(v),
+                    style: Brutal.body(size: 16, color: Brutal.paper),
+                    cursorColor: Brutal.magenta,
+                    decoration: InputDecoration(
+                      hintText: 'Search by username...',
+                      hintStyle: Brutal.body(size: 16, color: Brutal.mute),
+                      prefixIcon: const Icon(Icons.search, color: Brutal.mute, size: 18),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                notifier.reset();
+                                setState(() {});
+                              },
+                              child: const Icon(Icons.close, color: Brutal.mute, size: 16),
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Back button and title
-                    Row(
+                if (selectedUser != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Brutal.bg,
+                      border: Border.all(color: Brutal.magenta, width: 2),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        GestureDetector(
-                          onTap: () => context.pop(),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back_ios_new,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Send Drink Ticket',
-                            style: GoogleFonts.outfit(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                        const Icon(Icons.local_drink_outlined, color: Brutal.magenta, size: 14),
+                        const SizedBox(width: 8),
+                        Text('SENDING TO  ', style: Brutal.label(size: 10, color: Brutal.mute)),
+                        Text(selectedUser.username ?? 'User',
+                            style: Brutal.label(size: 10, color: Brutal.magenta)),
                       ],
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // Search Bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              width: 1,
-                            ),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            onSubmitted: (value) {
-                              ref.read(sendDrinkTicketViewModel.notifier).getUsers(value);
-                            },
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 15,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Search by username...',
-                              hintStyle: GoogleFonts.inter(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 15,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: ColorPallete.brightPink.withValues(alpha: 0.7),
-                                size: 22,
-                              ),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        _searchController.clear();
-                                        setState(() {});
-                                      },
-                                      child: Icon(
-                                        Icons.close,
-                                        color: Colors.white.withValues(alpha: 0.5),
-                                        size: 20,
-                                      ),
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Selected user indicator
-                    if (selectedUser != null) ...[
-                      const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  ColorPallete.brightPink.withValues(alpha: 0.2),
-                                  Colors.purple.withValues(alpha: 0.2),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: ColorPallete.brightPink.withValues(alpha: 0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.person_rounded,
-                                  color: ColorPallete.brightPink,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Sending to: ',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                Text(
-                                  selectedUser.username ?? 'User',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              // User List
-              Expanded(
-                child: users.isEmpty && !searchUserProvider.isLoading
-                    ? _EmptyState()
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Container(height: 1, color: Brutal.hairlineColor),
+          Expanded(
+            child: state.isLoading
+                ? const Center(child: CircularProgressIndicator(color: Brutal.magenta, strokeWidth: 2))
+                : users.isEmpty
+                    ? _searchController.text.isEmpty
+                        ? const _IdleState()
+                        : const _EmptyState()
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         itemCount: users.length,
-                        itemBuilder: (context, index) {
-                          final user = users[index];
+                        itemBuilder: (context, i) {
+                          final user = users[i];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.only(bottom: 1),
                             child: UserTile(
                               name: user.username ?? '',
-                              image: '',
-                              onSelected: () {
-                                ref
-                                    .read(sendDrinkTicketViewModel.notifier)
-                                    .setSelectedUser(user);
-                              },
+                              image: user.image ?? '',
                               isSelected: user.id == selectedUser?.id,
+                              onSelected: () => notifier.setSelectedUser(user),
                             ),
                           );
                         },
                       ),
-              ),
-
-              // Bottom Action Bar
-              Container(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  bottom: MediaQuery.of(context).padding.bottom + 16,
-                  top: 16,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFF0F0F1E).withValues(alpha: 0.0),
-                      const Color(0xFF0F0F1E).withValues(alpha: 0.95),
-                      const Color(0xFF0F0F1E),
-                    ],
-                  ),
-                ),
-                child: GestureDetector(
-                  onTap: () async {
-                    // Check if a user is selected
-                    if (selectedUser == null) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Please select a user to send the ticket to',
-                              style: GoogleFonts.inter(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.red.withValues(alpha: 0.9),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-
-                    // Send ticket functionality
-                    final result = await notifier.sendTicket(
-                      ticketId: widget.ticketId,
-                    );
-
-                    if (!context.mounted) return;
-
-                    if (result) {
-                      // Refresh the drink tickets list
-                      ref.read(purchasedDrinkTicket.notifier).refreshTickets();
-
-                      Future.delayed(const Duration(milliseconds: 100), () async {
-                        if (context.mounted) {
-                          await showCustomAlertDialog(
-                            context: context,
-                            title: "Ticket Sent",
-                            message:
-                                "Your drink ticket has been successfully sent to ${selectedUser.name ?? "the user"}",
-                            onConfirm: () {
-                              context.pop();
-                            },
-                          );
-                        }
-                      });
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Failed to send ticket. Please try again.',
-                              style: GoogleFonts.inter(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.red.withValues(alpha: 0.9),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          ColorPallete.brightPink,
-                          const Color(0xFFE91E63),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: ColorPallete.brightPink.withValues(alpha: 0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          selectedUser != null
-                              ? 'Send Ticket to ${selectedUser.username}'
-                              : 'Send Drink Ticket',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
-
-          // Loading Overlay
-          if (searchUserProvider.isLoading)
-            Positioned.fill(
+          Container(
+            color: Brutal.bg,
+            padding: EdgeInsets.fromLTRB(20, 12, 20, botPad + 16),
+            child: GestureDetector(
+              onTap: () async {
+                if (selectedUser == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Select a user first'),
+                    backgroundColor: Brutal.elevated,
+                  ));
+                  return;
+                }
+                final ok = await notifier.sendTicket(ticketId: widget.ticketId);
+                if (!context.mounted) return;
+                if (ok) {
+                  ref.read(purchasedDrinkTicket.notifier).refreshTickets();
+                  await showCustomAlertDialog(
+                    context: context,
+                    title: 'Ticket Sent',
+                    message: 'Drink ticket sent to ${selectedUser.username ?? "the user"}',
+                    onConfirm: () => context.pop(),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Failed to send ticket. Try again.'),
+                    backgroundColor: Colors.red,
+                  ));
+                }
+              },
               child: Container(
-                color: Colors.black.withValues(alpha: 0.7),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A2E).withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(
-                            color: ColorPallete.brightPink,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Searching...',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
+                width: double.infinity,
+                color: selectedUser != null ? Brutal.magenta : Brutal.elevated,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.local_drink_outlined, color: Brutal.paper, size: 16),
+                    const SizedBox(width: 10),
+                    Text(
+                      selectedUser != null
+                          ? 'SEND TO ${(selectedUser.username ?? '').toUpperCase()}'
+                          : 'SEND DRINK TICKET',
+                      style: Brutal.label(size: 12, color: Brutal.paper),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _EmptyState extends StatelessWidget {
+class _IdleState extends StatelessWidget {
+  const _IdleState();
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-                width: 2,
-              ),
-            ),
-            child: Icon(
-              Icons.search_off_rounded,
-              size: 60,
-              color: Colors.white.withValues(alpha: 0.3),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No users found',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try searching with a different username',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(width: 72, height: 72, color: Brutal.elevated,
+              child: const Icon(Icons.search, color: Brutal.mute, size: 32)),
+          const SizedBox(height: 20),
+          Text('Search for a user', style: Brutal.display(size: 20, color: Brutal.paper)),
+          const SizedBox(height: 6),
+          Text('Type a username above', style: Brutal.body(size: 14, color: Brutal.mute)),
+        ]),
+      );
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(width: 72, height: 72, color: Brutal.elevated,
+              child: const Icon(Icons.person_search_outlined, color: Brutal.mute, size: 32)),
+          const SizedBox(height: 20),
+          Text('No users found', style: Brutal.display(size: 20, color: Brutal.paper)),
+          const SizedBox(height: 6),
+          Text('Try a different username', style: Brutal.body(size: 14, color: Brutal.mute)),
+        ]),
+      );
 }

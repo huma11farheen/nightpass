@@ -42,6 +42,10 @@ class SendDrinkTicketViewModel extends StateNotifier<SendTicketState> {
     state = state.copyWith(isLoading: false);
     return false;
   }
+
+  void reset() {
+    state = const SendTicketState();
+  }
 }
 
 final sendDrinkTicketViewModel =

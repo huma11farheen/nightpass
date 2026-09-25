@@ -1,533 +1,454 @@
-import 'dart:io';
-import 'dart:ui';
+import 'package:clubship/widgets/back_button.dart';
+import 'package:clubship/widgets/video_background.dart';
+import 'package:clubship/design/brutal.dart';
 
-import 'package:clubship/colors.dart';
 import 'package:clubship/data/providers/auth_repository_provider.dart';
-import 'package:clubship/repository/users_repository.dart';
 import 'package:clubship/router.dart';
 import 'package:clubship/sign_up/signup_state.dart';
 import 'package:clubship/sign_up/signup_view_model.dart';
 import 'package:clubship/widgets/app_button.dart';
 import 'package:clubship/widgets/clubship_textfield.dart';
-import 'package:clubship/widgets/drop_down_selector.dart';
-import 'package:clubship/widgets/image_picker.dart';
 import 'package:clubship/widgets/sncakbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../data/supabase_models/gender.dart';
 
 final signUpProviderNotifier =
     StateNotifierProvider<SignUpStateNotifier, SignUpState>(
-  (ref) {
-    return SignUpStateNotifier(ref.read(authRepositoryProvider));
-  },
+  (ref) => SignUpStateNotifier(ref.read(authRepositoryProvider)),
 );
 
 class RegisterProfileScreen extends ConsumerStatefulWidget {
   const RegisterProfileScreen({super.key});
 
   @override
-  ConsumerState<RegisterProfileScreen> createState() => _LoginPageState();
+  ConsumerState<RegisterProfileScreen> createState() => _RegisterState();
 }
 
-class _LoginPageState extends ConsumerState<RegisterProfileScreen> {
-  final _scroll = ScrollController();
-  final _fullNameNode   = FocusNode();
-  final _usernameNode   = FocusNode();
-  final _genderNode     = FocusNode(); // only if DropDown needs it
-  final _emailNode      = FocusNode();
-  final _passwordNode   = FocusNode();
-  File? _image;
+class _RegisterState extends ConsumerState<RegisterProfileScreen> {
+  final _scroll        = ScrollController();
+  final _fullNameNode  = FocusNode();
+  final _usernameNode  = FocusNode();
+  final _emailNode     = FocusNode();
+  final _passwordNode  = FocusNode();
+  final _otpController = TextEditingController();
+  final _otpNode       = FocusNode();
 
+  // 1 = profile, 2 = credentials, 3 = OTP verification
+  int _step = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(signUpProviderNotifier);
+    });
+  }
 
   @override
   void dispose() {
     _scroll.dispose();
     _fullNameNode.dispose();
     _usernameNode.dispose();
-    _genderNode.dispose();
     _emailNode.dispose();
     _passwordNode.dispose();
+    _otpController.dispose();
+    _otpNode.dispose();
     super.dispose();
   }
 
   void _ensureVisible(FocusNode node) {
-    // wait for keyboard animation & layout pass
     Future.delayed(const Duration(milliseconds: 300), () {
       if (node.context != null) {
-        Scrollable.ensureVisible(
-          node.context!,
-          alignment: 0.2,                       // keep field a bit below top
-          duration: const Duration(milliseconds: 250),
-        );
+        Scrollable.ensureVisible(node.context!,
+            alignment: 0.2, duration: const Duration(milliseconds: 250));
       }
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
+  Future<void> _submitCredentials() async {
+    HapticFeedback.mediumImpact();
+    FocusScope.of(context).unfocus();
+    final notifier = ref.read(signUpProviderNotifier.notifier);
+    final error = await notifier.signUpAndSendOtp();
+    if (!mounted) return;
+    if (error != null) {
+      context.showSnackbar(message: error);
+    } else {
+      _otpController.clear();
+      setState(() => _step = 3);
+      _scroll.animateTo(0,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
   }
 
+  Future<void> _verifyOtp() async {
+    final otp = _otpController.text.trim();
+    if (otp.length != 6) {
+      context.showSnackbar(message: 'Please enter the 6-digit code');
+      return;
+    }
+    HapticFeedback.mediumImpact();
+    FocusScope.of(context).unfocus();
+    final notifier = ref.read(signUpProviderNotifier.notifier);
+    final error = await notifier.verifyOtpAndCreate(otp);
+    if (!mounted) return;
+    if (error != null) {
+      context.showSnackbar(message: error);
+    } else {
+      context.showSnackbar(message: 'Welcome to NightPass!');
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) context.go(Routes.mainLandingScreen);
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final signupProviderNotifier = ref.read(signUpProviderNotifier.notifier);
-    final state = ref.watch(signUpProviderNotifier);
-
-    return Theme(
-      data: Theme.of(context).copyWith(
-        dividerTheme: const DividerThemeData(color: Colors.transparent),
-      ),
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: const Color(0xFF0A0A0F),
-        body: Stack(
-          children: [
-            // Animated gradient background
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF1A1A2E),
-                      const Color(0xFF0A0A0F),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Floating circles background decoration
-            Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      ColorPallete.brightPink.withValues(alpha: 0.1),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -150,
-              left: -100,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      Colors.purple.withValues(alpha: 0.08),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Main content
-            SafeArea(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => FocusScope.of(context).unfocus(),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _scroll,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-
-                            // Back button
-                            IconButton(
-                              onPressed: () {
-                                HapticFeedback.lightImpact();
-                                context.pop();
-                              },
-                              icon: Icon(
-                                Icons.arrow_back_ios,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                size: 24,
-                              ),
-                              padding: EdgeInsets.zero,
-                              alignment: Alignment.centerLeft,
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Welcome text
-                            Text(
-                              'Create Your',
-                              style: GoogleFonts.outfit(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.5,
-                                height: 1.2,
-                              ),
-                            ),
-                            Text(
-                              'NightPass Account',
-                              style: GoogleFonts.outfit(
-                                fontSize: 38,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.pinkAccent,
-                                letterSpacing: -0.5,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Join Tokyo\'s most exclusive nightlife community',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w600,
-                                height: 1.4,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                      GestureDetector(
-                        onTap: () async {
-                          showImageSourceBottomSheet(
-                            context,
-                            (image) {
-                              signupProviderNotifier.addImage(image: image);
-                              setState(() {
-                                _image = image;
-                              });
-                            },
-                          );
-                        },
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                //borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  width: 0.5,
-                                  color: Colors.grey[600]!,
-                                ),
-                                image: _image != null
-                                    ? DecorationImage(
-                                        image: FileImage(
-                                          File(_image!.path),
-                                        ),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            const Positioned.fill(
-                              child: Center(
-                                child: Icon(
-                                  Icons.camera_alt_outlined,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Full name field
-                      Text(
-                        'Full Name',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ClubTextField(
-                        focusNode: _fullNameNode,
-                        onTap: () => _ensureVisible(_fullNameNode),
-                        icon: Icons.person_outline,
-                        hintText: 'Enter your full name',
-                        onChanged: (value) {
-                          signupProviderNotifier.setFullname(value);
-                        },
-                      ),
-                      if (state.nameError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8, left: 4),
-                          child: Text(
-                            state.nameError!,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: Colors.red.withValues(alpha: 0.9),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-
-                      // Username field
-                      Text(
-                        'Username',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ClubTextField(
-                        onTap: () => _ensureVisible(_usernameNode),
-                        focusNode: _usernameNode,
-                        icon: Icons.alternate_email,
-                        hintText: 'Choose a username',
-                        onChanged: (value) {
-                          signupProviderNotifier.setUsername(value);
-                        },
-                      ),
-                      if (state.validUserNameMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8, left: 4),
-                          child: Text(
-                            state.validUserNameMessage!,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: Colors.red.withValues(alpha: 0.9),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-
-                      // Gender field
-                      Text(
-                        'Gender',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap:()=>  _ensureVisible(_genderNode) ,
-                        child: DropDownSelector<Gender>(
-                          isRequired: true,
-                          labelText: 'Gender',
-                          values: Gender.values,
-                          initialValue: null,
-                          labels: Gender.values.map((v) => v.name).toList(),
-                          onChanged: (value) {
-                            signupProviderNotifier.setGender(value);
-                          },
-                        ),
-                      ),
-                      if (state.genderError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8, left: 4),
-                          child: Text(
-                            state.genderError!,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: Colors.red.withValues(alpha: 0.9),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-
-                      // Email field
-                      Text(
-                        'Email',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ClubTextField(
-                        focusNode: _emailNode,
-                        onTap: () => _ensureVisible(_emailNode),
-                        icon: Icons.email_outlined,
-                        hintText: 'Enter your email',
-                        isEmail: true,
-                        onChanged: (value) {
-                          signupProviderNotifier.setEmail(value);
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Password field
-                      Text(
-                        'Password',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ClubTextField(
-                        focusNode: _passwordNode,
-                        onTap: () => _ensureVisible(_passwordNode),
-                        icon: Icons.lock_outline,
-                        hintText: 'Create a password',
-                        isPassword: true,
-                        onChanged: (value) {
-                          signupProviderNotifier.setPassword(value);
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Bottom section with register button
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 24,
-                        right: 24,
-                        bottom: 24,
-                      ),
-                      child: Column(
-                        children: [
-                          // Register button
-                          AppButton.primary(
-                            text: state.isLoading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT',
-                            onPressed: !state.isLoading && state.isValid
-                                ? () async {
-                                    if (!mounted) return;
-                                    final result = await signupProviderNotifier.signup();
-                                    if (result == SignUpResult.success) {
-                                      if (context.mounted) {
-                                        context.showSnackbar(
-                                          message: 'Welcome to NightPass! Your account has been created.',
-                                        );
-                                        await Future.delayed(const Duration(seconds: 1));
-                                        if (context.mounted) {
-                                          context.go(Routes.mainLandingScreen);
-                                        }
-                                      }
-                                    } else if (context.mounted) {
-                                      context.showSnackbar(message: result.description);
-                                    }
-                                  }
-                                : () {},
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Sign in link
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Already have an account? ',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  context.pop();
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Text(
-                                  'Sign In',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: ColorPallete.brightPink,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Loading overlay
-            if (state.isLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: ColorPallete.cardColor.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: ColorPallete.brightPink.withValues(alpha: 0.2),
-                              blurRadius: 20,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(
-                              color: ColorPallete.brightPink,
-                              strokeWidth: 3,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Creating your account...',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+  Future<void> _resendOtp() async {
+    final notifier = ref.read(signUpProviderNotifier.notifier);
+    final error = await notifier.signUpAndSendOtp();
+    if (!mounted) return;
+    context.showSnackbar(
+      message: error ?? 'Code resent to your email',
     );
   }
 
-  void navigateToHomeScreen() {
-    context.push(Routes.mainLandingScreen);
+  @override
+  Widget build(BuildContext context) {
+    final notifier  = ref.read(signUpProviderNotifier.notifier);
+    final state     = ref.watch(signUpProviderNotifier);
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+
+    final headings = ['Who\nAre You?', 'Your\nCredentials', 'Verify\nYour Email'];
+    final subtitles = [
+      'Set up your NightPass profile.',
+      'How you\'ll sign in every time.',
+      'Enter the 6-digit code sent to ${state.email ?? 'your email'}.',
+    ];
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          const VideoBackground(opacity: 0.40),
+
+          SafeArea(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scroll,
+                      padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPad + 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
+
+                          // ── Top bar ──────────────────────────────────────────
+                          Row(
+                            children: [
+                              AppBackButton(
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  if (_step > 1) {
+                                    setState(() => _step--);
+                                  } else {
+                                    context.pop();
+                                  }
+                                },
+                              ),
+                              const Spacer(),
+                              _StepDot(active: _step == 1, done: _step > 1),
+                              const SizedBox(width: 6),
+                              _StepDot(active: _step == 2, done: _step > 2),
+                              const SizedBox(width: 6),
+                              _StepDot(active: _step == 3, done: false),
+                            ],
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // ── Brand ────────────────────────────────────────────
+                          Text('NIGHTPASS',
+                              style: Brutal.label(size: 13, color: Brutal.magenta)),
+                          const SizedBox(height: 12),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            child: Align(
+                              key: ValueKey(_step),
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                headings[_step - 1],
+                                style: Brutal.display(size: 52, color: Brutal.paper),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            child: Align(
+                              key: ValueKey('sub$_step'),
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                subtitles[_step - 1],
+                                style: Brutal.body(size: 15, color: Brutal.dim),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 40),
+
+                          // ── Step 1: Profile ──────────────────────────────────
+                          if (_step == 1) ...[
+                            Text('FULL NAME',
+                                style: Brutal.label(size: 11, color: Brutal.mute)),
+                            const SizedBox(height: 8),
+                            ClubTextField(
+                              focusNode: _fullNameNode,
+                              onTap: () => _ensureVisible(_fullNameNode),
+                              icon: Icons.person_outline,
+                              hintText: 'Your full name',
+                              onChanged: notifier.setFullname,
+                            ),
+                            if (state.nameError != null) ...[
+                              const SizedBox(height: 6),
+                              Text(state.nameError!,
+                                  style: Brutal.label(size: 11, color: Colors.red)),
+                            ],
+
+                            const SizedBox(height: 20),
+
+                            Text('USERNAME',
+                                style: Brutal.label(size: 11, color: Brutal.mute)),
+                            const SizedBox(height: 8),
+                            ClubTextField(
+                              focusNode: _usernameNode,
+                              onTap: () => _ensureVisible(_usernameNode),
+                              icon: Icons.alternate_email,
+                              hintText: 'Choose a username',
+                              onChanged: notifier.setUsername,
+                            ),
+                            if (state.validUserNameMessage != null) ...[
+                              const SizedBox(height: 6),
+                              Text(state.validUserNameMessage!,
+                                  style: Brutal.label(size: 11, color: Colors.red)),
+                            ],
+
+                            const SizedBox(height: 20),
+
+                            Text('GENDER',
+                                style: Brutal.label(size: 11, color: Brutal.mute)),
+                            const SizedBox(height: 8),
+                            _GenderSelector(onChanged: notifier.setGender),
+                            if (state.genderError != null) ...[
+                              const SizedBox(height: 6),
+                              Text(state.genderError!,
+                                  style: Brutal.label(size: 11, color: Colors.red)),
+                            ],
+
+                            const SizedBox(height: 40),
+
+                            AppButton.primary(
+                              text: 'CONTINUE',
+                              onPressed: () {
+                                HapticFeedback.mediumImpact();
+                                FocusScope.of(context).unfocus();
+                                setState(() => _step = 2);
+                                _scroll.animateTo(0,
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeOut);
+                              },
+                            ),
+                          ],
+
+                          // ── Step 2: Credentials ──────────────────────────────
+                          if (_step == 2) ...[
+                            AutofillGroup(
+                              onDisposeAction: AutofillContextAction.cancel,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('EMAIL',
+                                      style: Brutal.label(size: 11, color: Brutal.mute)),
+                                  const SizedBox(height: 8),
+                                  ClubTextField(
+                                    focusNode: _emailNode,
+                                    onTap: () => _ensureVisible(_emailNode),
+                                    icon: Icons.email_outlined,
+                                    hintText: 'Enter your email',
+                                    isEmail: true,
+                                    onChanged: notifier.setEmail,
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  Text('PASSWORD',
+                                      style: Brutal.label(size: 11, color: Brutal.mute)),
+                                  const SizedBox(height: 8),
+                                  ClubTextField(
+                                    focusNode: _passwordNode,
+                                    onTap: () => _ensureVisible(_passwordNode),
+                                    icon: Icons.lock_outline,
+                                    hintText: 'Create a password',
+                                    isPassword: true,
+                                    onChanged: notifier.setPassword,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            AppButton.primary(
+                              isLoading: state.isLoading,
+                              text: 'SEND CODE',
+                              onPressed: state.isLoading || !state.isValid
+                                  ? () {}
+                                  : _submitCredentials,
+                            ),
+                          ],
+
+                          // ── Step 3: OTP ──────────────────────────────────────
+                          if (_step == 3) ...[
+                            Text('6-DIGIT CODE',
+                                style: Brutal.label(size: 11, color: Brutal.mute)),
+                            const SizedBox(height: 8),
+                            ClubTextField(
+                              controller: _otpController,
+                              focusNode: _otpNode,
+                              onTap: () => _ensureVisible(_otpNode),
+                              icon: Icons.pin_outlined,
+                              hintText: '000000',
+                              type: TextInputType.number,
+                              onChanged: (_) {},
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            GestureDetector(
+                              onTap: state.isLoading ? null : _resendOtp,
+                              child: Text(
+                                'Resend code',
+                                style: Brutal.label(size: 12, color: Brutal.magenta),
+                              ),
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            AppButton.primary(
+                              isLoading: state.isLoading,
+                              text: 'VERIFY & CREATE ACCOUNT',
+                              onPressed: state.isLoading ? () {} : _verifyOtp,
+                            ),
+                          ],
+
+                          const SizedBox(height: 24),
+
+                          // ── Sign in link ─────────────────────────────────────
+                          if (_step < 3)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('Already have an account?  ',
+                                    style: Brutal.body(size: 14, color: Brutal.dim)),
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    context.pop();
+                                  },
+                                  child: Text('Sign In',
+                                      style: Brutal.label(
+                                          size: 12, color: Brutal.magenta)),
+                                ),
+                              ],
+                            ),
+
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Step dot indicator ──────────────────────────────────────────────────────────
+
+class _StepDot extends StatelessWidget {
+  const _StepDot({required this.active, required this.done});
+  final bool active;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        width: active ? 20 : 6,
+        height: 6,
+        color: (active || done) ? Brutal.magenta : Brutal.elevated,
+      );
+}
+
+// ── Gender selector ─────────────────────────────────────────────────────────────
+
+class _GenderSelector extends StatefulWidget {
+  const _GenderSelector({required this.onChanged});
+  final void Function(Gender) onChanged;
+
+  @override
+  State<_GenderSelector> createState() => _GenderSelectorState();
+}
+
+class _GenderSelectorState extends State<_GenderSelector> {
+  Gender? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: Gender.values.map((g) {
+        final isSelected = _selected == g;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() => _selected = g);
+              widget.onChanged(g);
+            },
+            child: Container(
+              margin: EdgeInsets.only(right: g != Gender.values.last ? 1 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              color: isSelected ? Brutal.magenta : Brutal.elevated,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    g == Gender.male ? Icons.male : Icons.female,
+                    size: 16,
+                    color: isSelected ? Brutal.paper : Brutal.mute,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    g.name.toUpperCase(),
+                    style: Brutal.label(
+                        size: 12,
+                        color: isSelected ? Brutal.paper : Brutal.mute),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }

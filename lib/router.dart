@@ -27,6 +27,7 @@ import 'package:clubship/send_tickets/send_drink_ticket.dart';
 import 'package:clubship/send_tickets/send_event_tickets.dart';
 import 'package:clubship/sign_up/sign_up.dart';
 import 'package:clubship/supabase/supabase_client.dart';
+import 'package:clubship/onboarding/splash_video_page.dart';
 import 'package:clubship/wallet/saved_cards.dart';
 import 'package:clubship/widgets/common_web_view.dart';
 import 'package:flutter/foundation.dart';
@@ -75,10 +76,14 @@ abstract class Routes {
 
 final router = GoRouter(
   navigatorKey: rootNavigatorKey,
-  initialLocation: Routes.login,
+  initialLocation: Routes.splash,
   redirect: _redirectIfSignedIn,
-  refreshListenable: AuthStateNotifier(),
+  refreshListenable: authStateNotifier,
   routes: [
+    GoRoute(
+      path: Routes.splash,
+      builder: (context, state) => const SplashVideoPage(),
+    ),
     GoRoute(
       path: Routes.login,
       builder: (context, state) => const LoginPage(),
@@ -270,19 +275,32 @@ final router = GoRouter(
   ],
 );
 
-// Auth state notifier to control router refresh
 class AuthStateNotifier extends ChangeNotifier {
+  bool isPasswordRecovery = false;
+
   AuthStateNotifier() {
-    // Listen to auth state changes
-    supabase.auth.onAuthStateChange.listen((data) {
-      notifyListeners();
-    });
+    supabase.auth.onAuthStateChange.listen((_) => notifyListeners());
+  }
+
+  void beginPasswordRecovery() {
+    isPasswordRecovery = true;
+  }
+
+  void endPasswordRecovery() {
+    isPasswordRecovery = false;
   }
 }
 
+final authStateNotifier = AuthStateNotifier();
+
 String? _redirectIfSignedIn(BuildContext context, GoRouterState state) {
+  // Splash handles its own navigation — never redirect it
+  if (state.uri.path == Routes.splash) return null;
+
   final session = supabase.auth.currentSession;
   final isLoggedIn = session != null;
+
+  debugPrint('🔀 REDIRECT: path=${state.uri.path} isLoggedIn=$isLoggedIn isRecovery=${authStateNotifier.isPasswordRecovery}');
 
   // Only redirect on specific paths to prevent issues on app resume
   if (isLoggedIn) {
@@ -291,9 +309,14 @@ String? _redirectIfSignedIn(BuildContext context, GoRouterState state) {
       return null;
     }
 
-    // Only redirect from login/forgot password to home
-    if (state.uri.path == Routes.login ||
-        state.uri.path == Routes.forgetPassword) {
+    // During password recovery flow, suppress all redirects
+    if (authStateNotifier.isPasswordRecovery) {
+      debugPrint('🔀 REDIRECT: suppressed — password recovery in progress');
+      return null;
+    }
+
+    // Only redirect from login to home
+    if (state.uri.path == Routes.login) {
       return Routes.mainLandingScreen;
     }
 
@@ -304,8 +327,7 @@ String? _redirectIfSignedIn(BuildContext context, GoRouterState state) {
   } else {
     // Only redirect to login if trying to access protected routes
     if (state.uri.path == Routes.mainLandingScreen ||
-        state.uri.path.startsWith('/home') ||
-        state.uri.path == Routes.splash) {
+        state.uri.path.startsWith('/home')) {
       return Routes.login;
     }
   }

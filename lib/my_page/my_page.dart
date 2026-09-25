@@ -1,13 +1,15 @@
-import 'dart:ui';
-
-import 'package:clubship/colors.dart';
 import 'package:clubship/data/providers/auth_repository_provider.dart';
+import 'package:clubship/design/brutal.dart';
+import 'package:clubship/event/event_list/event_list_page.dart';
+import 'package:clubship/event/providers/get_events_provider.dart';
 import 'package:clubship/my_page/my_page_state.dart';
 import 'package:clubship/my_page/my_page_view_model.dart';
 import 'package:clubship/my_page/providers/get_user_detail_provider.dart';
 import 'package:clubship/my_page/update_account_details.dart';
+import 'package:clubship/notifications/providers/get_notifications_provider.dart';
 import 'package:clubship/router.dart';
-import 'package:clubship/widgets/app_button.dart';
+import 'package:clubship/sign_up/sign_up.dart';
+import 'package:clubship/widgets/back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,36 +22,38 @@ final myPageProvider = StateNotifierProvider<MyPageViewModel, MyPageState>(
 );
 
 class MyPage extends StatelessWidget {
-  const MyPage({
-    super.key,
-  });
+  const MyPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    final canPop = Navigator.of(context).canPop();
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: 120),
+      backgroundColor: Brutal.bg,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.only(top: topPadding + 16, bottom: 120),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ProfileHeader(),
-            SizedBox(height: 24),
-            MenuSection(),
-            SizedBox(height: 24),
-            AccountActionsSection(),
+            if (canPop) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: Row(
+                  children: [
+                    const AppBackButton(),
+                    const SizedBox(width: 14),
+                    Text('Profile', style: Brutal.display(size: 22, color: Brutal.paper)),
+                  ],
+                ),
+              ),
+              Container(height: 1, color: Brutal.hairlineColor),
+              const SizedBox(height: 24),
+            ],
+            const ProfileHeader(),
+            const SizedBox(height: 32),
+            const MenuSection(),
+            const SizedBox(height: 32),
+            const AccountActionsSection(),
           ],
         ),
       ),
@@ -57,7 +61,8 @@ class MyPage extends StatelessWidget {
   }
 }
 
-// Profile Header Widget
+// ─── Profile Header ───────────────────────────────────────────────────────────
+
 class ProfileHeader extends ConsumerWidget {
   const ProfileHeader({super.key});
 
@@ -67,173 +72,115 @@ class ProfileHeader extends ConsumerWidget {
 
     return userState.when(
       data: (user) {
-        return Container(
-          margin: const EdgeInsets.all(20),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Square avatar with neon border
+              Container(
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      ColorPallete.brightPink.withValues(alpha: 0.15),
-                      ColorPallete.cardColor.withValues(alpha: 0.4),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
+                  color: Brutal.elevated,
+                  border: Brutal.neon(),
+                  image: user?.image != null
+                      ? DecorationImage(
+                          image: NetworkImage(user!.image!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                padding: const EdgeInsets.all(24),
+                child: user?.image == null
+                    ? const Icon(
+                        Icons.person,
+                        size: 36,
+                        color: Brutal.mute,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 20),
+
+              // Name / username / email stack
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Profile Avatar
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            ColorPallete.brightPink,
-                            Colors.yellow,
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: ColorPallete.brightPink.withValues(alpha: 0.5),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                    Text(
+                      user?.name ?? 'Guest User',
+                      style: Brutal.display(size: 24, color: Brutal.paper),
+                    ),
+                    const SizedBox(height: 6),
+                    if (user?.username != null) ...[
+                      Row(
+                        children: [
+                          Text(
+                            '@',
+                            style: Brutal.label(size: 11, color: Brutal.magenta),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            user!.username!,
+                            style: Brutal.label(size: 11, color: Brutal.magenta),
                           ),
                         ],
                       ),
-                      child: Container(
-                        margin: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: ColorPallete.black25,
-                          image: user?.image != null
-                              ? DecorationImage(
-                                  image: NetworkImage(user!.image!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: user?.image == null
-                            ? Icon(
-                                Icons.person,
-                                size: 50,
-                                color: Colors.white.withValues(alpha: 0.7),
-                              )
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // User Name
-                    Text(
-                      user?.name ?? 'Guest User',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Username
-                    if (user?.username != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: ColorPallete.brightPink.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: ColorPallete.brightPink.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.alternate_email,
-                              color: ColorPallete.brightPink,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              user!.username!,
-                              style: const TextStyle(
-                                color: ColorPallete.brightPink,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-
-                    // User Email
+                      const SizedBox(height: 4),
+                    ],
                     if (user?.contactEmail != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.email_outlined,
-                              color: Colors.white.withValues(alpha: 0.7),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              user!.contactEmail!,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
+                      Text(
+                        user!.contactEmail!,
+                        style: Brutal.body(size: 14, color: Brutal.mute),
                       ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
       error: (_, __) => const SizedBox(),
-      loading: () => Container(
-        margin: const EdgeInsets.all(20),
-        height: 250,
+      loading: () => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Skeletonizer(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: ColorPallete.cardColor.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(20),
+          effect: const ShimmerEffect(
+            baseColor: Brutal.elevated,
+            highlightColor: Brutal.hover,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                color: Brutal.elevated,
               ),
-            ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 160,
+                      height: 22,
+                      color: Brutal.elevated,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 100,
+                      height: 12,
+                      color: Brutal.elevated,
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 140,
+                      height: 12,
+                      color: Brutal.elevated,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -241,7 +188,34 @@ class ProfileHeader extends ConsumerWidget {
   }
 }
 
-// Menu Section Widget
+// ─── Section Header helper ────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 2,
+          height: 12,
+          color: Brutal.magenta,
+        ),
+        const SizedBox(width: 10),
+        Text(
+          label.toUpperCase(),
+          style: Brutal.label(size: 11, color: Brutal.dim),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Menu Section ─────────────────────────────────────────────────────────────
+
 class MenuSection extends ConsumerWidget {
   const MenuSection({super.key});
 
@@ -256,36 +230,13 @@ class MenuSection extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.yellow,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Account',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Menu Items
+              const _SectionHeader('Account'),
+              const SizedBox(height: 14),
               MenuTileItem(
                 icon: Icons.person_outline,
-                iconColor: ColorPallete.brightPink,
+                iconColor: Brutal.magenta,
                 title: 'Account Settings',
-                subtitle: 'Edit your profile information',
+                subtitle: 'Edit your profile',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -295,29 +246,26 @@ class MenuSection extends ConsumerWidget {
                   );
                 },
               ),
-              const SizedBox(height: 12),
-
+              const SizedBox(height: 1),
               MenuTileItem(
                 icon: Icons.confirmation_number_outlined,
-                iconColor: Colors.purple,
+                iconColor: Brutal.cyan,
                 title: 'My Bookings',
                 subtitle: 'View your event tickets',
                 onTap: () => context.push(Routes.orderHistoryList),
               ),
-              const SizedBox(height: 12),
-
+              const SizedBox(height: 1),
               MenuTileItem(
                 icon: Icons.account_balance_wallet_outlined,
-                iconColor: Colors.green,
+                iconColor: Brutal.cyan,
                 title: 'Wallet & Cards',
                 subtitle: 'Manage payment methods',
                 onTap: () => context.push(Routes.savedCardsPage),
               ),
-              const SizedBox(height: 12),
-
+              const SizedBox(height: 1),
               MenuTileItem(
                 icon: Icons.help_outline,
-                iconColor: Colors.orange,
+                iconColor: Brutal.dim,
                 title: 'Support & Help',
                 subtitle: 'Get help and contact us',
                 onTap: () => context.push(
@@ -333,19 +281,26 @@ class MenuSection extends ConsumerWidget {
       loading: () => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Skeletonizer(
+          effect: const ShimmerEffect(
+            baseColor: Brutal.elevated,
+            highlightColor: Brutal.hover,
+          ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const _SectionHeader('Account'),
+              const SizedBox(height: 14),
               MenuTileItem(
                 icon: Icons.person_outline,
-                iconColor: ColorPallete.brightPink,
+                iconColor: Brutal.magenta,
                 title: 'Account Settings',
-                subtitle: 'Edit your profile information',
+                subtitle: 'Edit your profile',
                 onTap: () {},
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 1),
               MenuTileItem(
                 icon: Icons.confirmation_number_outlined,
-                iconColor: Colors.purple,
+                iconColor: Brutal.cyan,
                 title: 'My Bookings',
                 subtitle: 'View your event tickets',
                 onTap: () {},
@@ -358,7 +313,8 @@ class MenuSection extends ConsumerWidget {
   }
 }
 
-// Account Actions Section (Logout & Delete)
+// ─── Account Actions Section ──────────────────────────────────────────────────
+
 class AccountActionsSection extends ConsumerWidget {
   const AccountActionsSection({super.key});
 
@@ -371,175 +327,119 @@ class AccountActionsSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Colors.yellow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Account Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          const _SectionHeader('Account Actions'),
+          const SizedBox(height: 14),
 
-          // Logout Button
+          // Logout button
           GestureDetector(
             onTap: () async {
               await viewModel.logout();
+              // Invalidate all user-specific cached providers so the next
+              // account doesn't see stale data from the previous session.
+              ref.invalidate(getUserDetailProvider);
+              ref.invalidate(getEventsProvider);
+              ref.invalidate(eventListProvider);
+              ref.invalidate(getNotificationsProvider);
+              ref.invalidate(signUpProviderNotifier);
               if (context.mounted) {
-                // Clear navigation stack and go to login
                 context.go(Routes.login);
               }
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ColorPallete.cardColor.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1.5,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Brutal.elevated,
+                border: Border.all(color: Brutal.hairlineColor),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    color: Brutal.card,
+                    child: const Icon(
+                      Icons.logout,
+                      color: Brutal.paper,
+                      size: 18,
                     ),
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Logout',
+                          style: Brutal.body(size: 17, color: Brutal.paper),
                         ),
-                        child: const Icon(
-                          Icons.logout,
-                          color: Colors.white,
-                          size: 24,
+                        const SizedBox(height: 2),
+                        Text(
+                          'Sign out of your account',
+                          style: Brutal.label(size: 10, color: Brutal.mute),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Logout',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Sign out of your account',
-                              style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white.withValues(alpha: 0.5),
-                        size: 18,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Brutal.mute,
+                    size: 14,
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 1),
 
-          // Delete Account Button
+          // Delete Account button
           GestureDetector(
             onTap: () async {
               // Show confirmation dialog before deletion
               // await viewModel.deleteUserAccount();
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.red.withValues(alpha: 0.2),
-                        ColorPallete.cardColor.withValues(alpha: 0.4),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Brutal.elevated,
+                border: Border.all(
+                  color: Colors.red.withValues(alpha: 0.5),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    color: Colors.red.withValues(alpha: 0.12),
+                    child: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.red,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Delete Account',
+                          style: Brutal.body(size: 17, color: Colors.red),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Permanently remove your account',
+                          style: Brutal.label(size: 10, color: Brutal.mute),
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.delete_forever,
-                          color: Colors.red,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Delete Account',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Permanently remove your account',
-                              style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.red.withValues(alpha: 0.7),
-                        size: 18,
-                      ),
-                    ],
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.red.withValues(alpha: 0.6),
+                    size: 14,
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -549,7 +449,8 @@ class AccountActionsSection extends ConsumerWidget {
   }
 }
 
-// Modern Menu Tile Item Widget
+// ─── Menu Tile Item ───────────────────────────────────────────────────────────
+
 class MenuTileItem extends StatelessWidget {
   const MenuTileItem({
     super.key,
@@ -570,66 +471,48 @@ class MenuTileItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: ColorPallete.cardColor.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1.5,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Brutal.elevated,
+          border: Border.all(color: Brutal.hairlineColor),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        child: Row(
+          children: [
+            // Square icon container — no border radius
+            Container(
+              width: 36,
+              height: 36,
+              color: Brutal.card,
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 18,
               ),
             ),
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Brutal.body(size: 17, color: Brutal.paper),
                   ),
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 24,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Brutal.label(size: 10, color: Brutal.mute),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withValues(alpha: 0.5),
-                  size: 18,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Brutal.mute,
+              size: 14,
+            ),
+          ],
         ),
       ),
     );

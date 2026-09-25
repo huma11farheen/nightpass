@@ -1,10 +1,10 @@
-import 'dart:ui';
+import 'package:clubship/widgets/back_button.dart';
 import 'dart:io';
 
-import 'package:clubship/colors.dart';
 import 'package:clubship/data/providers/ticket_repository_provider.dart';
 import 'package:clubship/data/providers/user_wallet_repository_provider.dart';
-import 'package:clubship/domain/bottom_navigator_provider.dart';
+import 'package:clubship/design/brutal.dart';
+import 'package:clubship/drink_tickets/purchased_drink_tickets.dart';
 import 'package:clubship/event/providers/get_events_provider.dart';
 import 'package:clubship/event_ticket/buy_ticket_state.dart';
 import 'package:clubship/payment/stripe_payment_handler.dart';
@@ -15,14 +15,11 @@ import 'package:clubship/wallet/models/saved_card_model.dart';
 import 'package:clubship/wallet/saved_cards.dart';
 import 'package:clubship/widgets/app_button.dart';
 import 'package:clubship/widgets/failure_pop_up.dart';
-import 'package:clubship/widgets/line.dart';
-import 'package:clubship/widgets/pop_up.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class OrderSummaryPage extends ConsumerStatefulWidget {
   const OrderSummaryPage({super.key, required this.summary});
@@ -54,8 +51,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
         } else if (savedPaymentMethod == 'googlePay') {
           selectedPaymentMethod = PaymentMethod.googlePay;
         } else if (savedPaymentMethod == 'payAtDoor' &&
-                   widget.summary.event?.payAtTheDoor == true) {
-          // Only restore pay-at-door preference if the event allows it
+            widget.summary.event?.payAtTheDoor == true) {
           selectedPaymentMethod = PaymentMethod.payAtDoor;
         }
       }
@@ -84,32 +80,20 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
 
   Future<void> _fetchSavedCards() async {
     try {
-      // Load saved payment preferences first (instant, no loading)
       await _loadSavedPaymentPreferences();
-
-      // Fetch cards in background without showing loading state
-      final response =
-          await ref.read(userWalletRepositoryProvider).fetchSavedCards();
-
+      final response = await ref.read(userWalletRepositoryProvider).fetchSavedCards();
       if (!mounted) return;
-
       setState(() {
         cards = response;
-        // ALWAYS set first card as default if cards are available
-        // This ensures user doesn't have to select payment method every time
         if (cards.isNotEmpty) {
-          // If no saved preference or invalid preference, use first card
           if (selectedPaymentMethod == null ||
-              (selectedPaymentMethod == PaymentMethod.card && selectedCardIndex >= cards.length)) {
+              (selectedPaymentMethod == PaymentMethod.card &&
+                  selectedCardIndex >= cards.length)) {
             selectedPaymentMethod = PaymentMethod.card;
             selectedCardIndex = 0;
           }
-          // If saved preference was for digital wallet but user has cards, prefer the saved card
           if (selectedPaymentMethod == PaymentMethod.card) {
-            // Validate that saved card index is still valid
-            if (selectedCardIndex >= cards.length) {
-              selectedCardIndex = 0;
-            }
+            if (selectedCardIndex >= cards.length) selectedCardIndex = 0;
           }
         }
       });
@@ -126,30 +110,40 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ColorPallete.black25,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Brutal.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                  20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Payment Method',
-                        style: Theme.of(context).textTheme.headlineMedium,
+                      Row(
+                        children: [
+                          Container(width: 2, height: 18, color: Brutal.magenta),
+                          const SizedBox(width: 10),
+                          Text('Payment Method',
+                              style: Brutal.display(size: 20, color: Brutal.paper)),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Brutal.elevated,
+                            border: Border.all(color: Brutal.hairlineColor),
+                          ),
+                          child: const Icon(Icons.close, color: Brutal.dim, size: 18),
+                        ),
                       ),
                     ],
                   ),
@@ -157,26 +151,20 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
 
                   // Saved Cards
                   if (cards.isNotEmpty) ...[
-                    Text(
-                      'Saved Cards',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white70,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
+                    Text('Saved Cards',
+                        style: Brutal.label(size: 11, color: Brutal.mute)),
+                    const SizedBox(height: 10),
                     ...cards.asMap().entries.map((entry) {
                       final index = entry.key;
                       final card = entry.value;
-                      final isSelected =
-                          selectedPaymentMethod == PaymentMethod.card &&
-                              selectedCardIndex == index;
-
-                      return _PaymentMethodTile(
+                      final isSelected = selectedPaymentMethod == PaymentMethod.card &&
+                          selectedCardIndex == index;
+                      return _BrutalPaymentTile(
                         icon: Icons.credit_card,
-                        title: '${card.brand}',
+                        title: card.brand,
                         subtitle: '•••• ${card.last4}',
                         isSelected: isSelected,
-                        isCard: true,
+                        accentColor: Brutal.cyan,
                         onTap: () {
                           setModalState(() {
                             selectedPaymentMethod = PaymentMethod.card;
@@ -190,13 +178,12 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
                         },
                       );
                     }),
-                    const SizedBox(height: 8),
-                    _PaymentMethodTile(
+                    _BrutalPaymentTile(
                       icon: Icons.add_card,
-                      title: 'Add new card',
+                      title: 'Add New Card',
                       subtitle: '',
                       isSelected: false,
-                      isCard: true,
+                      accentColor: Brutal.mute,
                       onTap: () async {
                         Navigator.pop(context);
                         final result = await Navigator.push(
@@ -204,142 +191,119 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
                           MaterialPageRoute(
                             builder: (context) => SavedCardsPage(
                               isSelectionMode: true,
-                              selectedCardId: cards.isNotEmpty ? cards[selectedCardIndex].id : null,
+                              selectedCardId: cards.isNotEmpty
+                                  ? cards[selectedCardIndex].id
+                                  : null,
                             ),
                           ),
                         );
-
-                        // Handle the selected card result
                         if (result != null && result is int) {
                           setState(() {
                             selectedPaymentMethod = PaymentMethod.card;
                             selectedCardIndex = result;
                           });
                           _savePaymentPreferences();
-                          // Refresh cards list to get any newly added cards
                           await _fetchSavedCards();
                         }
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                   ],
 
                   // Digital Wallets
-                  Text(
-                    'Digital Wallets',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
+                  Text('Digital Wallets',
+                      style: Brutal.label(size: 11, color: Brutal.mute)),
+                  const SizedBox(height: 10),
 
-                  // Apple Pay (iOS only)
                   if (Platform.isIOS)
-                    _PaymentMethodTile(
+                    _BrutalPaymentTile(
                       icon: CupertinoIcons.creditcard,
                       title: 'Apple Pay',
-                      subtitle: 'Pay with Touch ID, Face ID, or Passcode',
+                      subtitle: 'Touch ID / Face ID',
                       isSelected: selectedPaymentMethod == PaymentMethod.applePay,
+                      accentColor: Brutal.paper,
                       onTap: () {
-                        setModalState(() {
-                          selectedPaymentMethod = PaymentMethod.applePay;
-                        });
-                        setState(() {
-                          selectedPaymentMethod = PaymentMethod.applePay;
-                        });
+                        setModalState(
+                            () => selectedPaymentMethod = PaymentMethod.applePay);
+                        setState(
+                            () => selectedPaymentMethod = PaymentMethod.applePay);
                         _savePaymentPreferences();
                       },
                     ),
 
-                  // Google Pay (Android only)
                   if (Platform.isAndroid)
-                    _PaymentMethodTile(
+                    _BrutalPaymentTile(
                       icon: Icons.payment,
                       title: 'Google Pay',
                       subtitle: 'Pay with your Google account',
                       isSelected: selectedPaymentMethod == PaymentMethod.googlePay,
+                      accentColor: Brutal.yellow,
                       onTap: () {
-                        setModalState(() {
-                          selectedPaymentMethod = PaymentMethod.googlePay;
-                        });
-                        setState(() {
-                          selectedPaymentMethod = PaymentMethod.googlePay;
-                        });
+                        setModalState(
+                            () => selectedPaymentMethod = PaymentMethod.googlePay);
+                        setState(
+                            () => selectedPaymentMethod = PaymentMethod.googlePay);
                         _savePaymentPreferences();
                       },
                     ),
 
-                  const SizedBox(height: 20),
-
-                  // Other payment methods - only show if there are options to display
+                  // Other Options
                   if (cards.isEmpty || widget.summary.event?.payAtTheDoor == true) ...[
-                    Text(
-                      'Other Options',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white70,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+                    Text('Other Options',
+                        style: Brutal.label(size: 11, color: Brutal.mute)),
+                    const SizedBox(height: 10),
 
-                    // Show "Add Card" option if no cards are saved
                     if (cards.isEmpty)
-                      _PaymentMethodTile(
+                      _BrutalPaymentTile(
                         icon: Icons.add_card,
                         title: 'Add Card',
                         subtitle: 'Add a new payment card',
                         isSelected: false,
-                        isCard: true,
+                        accentColor: Brutal.mute,
                         onTap: () async {
                           Navigator.pop(context);
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SavedCardsPage(
-                                isSelectionMode: true,
-                              ),
+                              builder: (context) =>
+                                  const SavedCardsPage(isSelectionMode: true),
                             ),
                           );
-
-                          // Handle the selected card result
                           if (result != null && result is int) {
                             setState(() {
                               selectedPaymentMethod = PaymentMethod.card;
                               selectedCardIndex = result;
                             });
                             _savePaymentPreferences();
-                            // Refresh cards list to get any newly added cards
                             await _fetchSavedCards();
                           }
                         },
                       ),
 
-                    // Only show Pay at Door option if the event allows it
                     if (widget.summary.event?.payAtTheDoor == true)
-                      _PaymentMethodTile(
+                      _BrutalPaymentTile(
                         icon: Icons.payments_outlined,
                         title: 'Pay at Door',
                         subtitle: 'Cash or card at venue',
-                        isSelected:
-                            selectedPaymentMethod == PaymentMethod.payAtDoor,
+                        isSelected: selectedPaymentMethod == PaymentMethod.payAtDoor,
+                        accentColor: Brutal.yellow,
                         onTap: () {
-                          setModalState(() {
-                            selectedPaymentMethod = PaymentMethod.payAtDoor;
-                          });
-                          setState(() {
-                            selectedPaymentMethod = PaymentMethod.payAtDoor;
-                          });
+                          setModalState(
+                              () => selectedPaymentMethod = PaymentMethod.payAtDoor);
+                          setState(
+                              () => selectedPaymentMethod = PaymentMethod.payAtDoor);
                           _savePaymentPreferences();
                         },
                       ),
                   ],
+
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: AppButton.primary(
-                        onPressed: () => Navigator.pop(context),
-                        text: 'Confirm'),
+                        onPressed: () => Navigator.pop(context), text: 'Confirm'),
                   ),
-                  SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
               ),
             );
@@ -350,51 +314,41 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
   }
 
   Future<void> buyNow() async {
-    // Calculate which female attendees are guestlist vs paid
     final totalGuestlistCapacity = widget.summary.event?.gustlist ?? 0;
     final registeredGuestlist = widget.summary.event?.registeredGuestlist ?? 0;
     final initialAvailableGuestlist = totalGuestlistCapacity - registeredGuestlist;
     final currentAvailableGuestlist = widget.summary.availableGuestlist;
-    final guestlistSpotsUsedByThisUser = initialAvailableGuestlist - currentAvailableGuestlist;
+    final guestlistSpotsUsedByThisUser =
+        initialAvailableGuestlist - currentAvailableGuestlist;
 
-    // Split female attendees into guestlist and paid
     final guestlistFemaleCount = guestlistSpotsUsedByThisUser;
-    final paidFemaleCount = widget.summary.femaleTicketCount - guestlistSpotsUsedByThisUser;
+    final paidFemaleCount =
+        widget.summary.femaleTicketCount - guestlistSpotsUsedByThisUser;
 
     final guestlistFemaleAttendees = guestlistFemaleCount > 0
         ? widget.summary.femaleAttendee.take(guestlistFemaleCount).toList()
         : <String>[];
-
     final paidFemaleAttendees = paidFemaleCount > 0
         ? widget.summary.femaleAttendee.skip(guestlistFemaleCount).toList()
         : <String>[];
 
     debugPrint('=== TICKET PURCHASE DEBUG ===');
-    debugPrint('Total guestlist capacity: $totalGuestlistCapacity');
-    debugPrint('Registered guestlist: $registeredGuestlist');
-    debugPrint('Initial available guestlist: $initialAvailableGuestlist');
-    debugPrint('Current available guestlist: $currentAvailableGuestlist');
-    debugPrint('Guestlist spots used by this user: $guestlistSpotsUsedByThisUser');
     debugPrint('Guestlist female count: $guestlistFemaleCount');
-    debugPrint('Guestlist female attendees: $guestlistFemaleAttendees');
     debugPrint('Paid female count: $paidFemaleCount');
-    debugPrint('Paid female attendees: $paidFemaleAttendees');
     debugPrint('Male tickets: ${widget.summary.maleTicketCount}');
-    debugPrint('Male attendees: ${widget.summary.maleAttendee}');
-    debugPrint('Total price: ${widget.summary.totalPrice}');
     debugPrint('============================');
 
-    // Call add-to-guestlist for guestlist females
     ApiResult? guestlistResult;
     if (guestlistFemaleCount > 0) {
-      guestlistResult = await ref.read(ticketRepositoryProvider).addToGuestlist(
-            eventId: widget.summary.eventId ?? '',
-            femaleCount: guestlistFemaleCount,
-            maleCount: 0,
-            isGuestlist: true,
-            femaleList: guestlistFemaleAttendees,
-            maleList: [],
-          );
+      guestlistResult =
+          await ref.read(ticketRepositoryProvider).addToGuestlist(
+                eventId: widget.summary.eventId ?? '',
+                femaleCount: guestlistFemaleCount,
+                maleCount: 0,
+                isGuestlist: true,
+                femaleList: guestlistFemaleAttendees,
+                maleList: [],
+              );
 
       if (guestlistResult != ApiResult.success) {
         if (!mounted) return;
@@ -403,15 +357,12 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
           title: "Failed to add to guestlist",
           message: "We couldn't process your guestlist request. Please try again.",
           confirmText: "OK",
-          onConfirm: () {
-            context.pop();
-          },
+          onConfirm: () => context.pop(),
         );
         return;
       }
     }
 
-    // Call buy-ticket for paid females + all males
     ApiResult? buyResult;
     if (paidFemaleCount > 0 || widget.summary.maleTicketCount > 0) {
       buyResult = await ref.read(ticketRepositoryProvider).buyTicket(
@@ -421,7 +372,9 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
             payLater: false,
             femaleList: paidFemaleAttendees,
             maleList: widget.summary.maleAttendee,
-            skipGuestlist: guestlistFemaleCount > 0, // Skip guestlist if we already handled guestlist tickets
+            skipGuestlist: guestlistFemaleCount == 0,
+            freeFemaleDrinkTickets: widget.summary.event?.freeFemaleDrinkTicket ?? 0,
+            freeMaleDrinkTickets: widget.summary.event?.freeMaleDrinkTicket ?? 0,
           );
 
       if (buyResult != ApiResult.success) {
@@ -431,9 +384,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
           title: "Failed to purchase",
           message: "We couldn't process your request. Please try again.",
           confirmText: "OK",
-          onConfirm: () {
-            context.pop();
-          },
+          onConfirm: () => context.pop(),
         );
         return;
       }
@@ -441,47 +392,31 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
 
     if (!mounted) return;
 
-    final result = (guestlistResult == ApiResult.success || guestlistFemaleCount == 0) &&
-                   (buyResult == ApiResult.success || (paidFemaleCount == 0 && widget.summary.maleTicketCount == 0));
+    final result =
+        (guestlistResult == ApiResult.success || guestlistFemaleCount == 0) &&
+            (buyResult == ApiResult.success ||
+                (paidFemaleCount == 0 && widget.summary.maleTicketCount == 0));
 
     if (result) {
-      // Keep loading while backend processes
-      // Force refresh events cache to update guestlist counts
-      // Wait for the backend to complete the database update
       await Future.delayed(const Duration(milliseconds: 1500));
-
-      // Invalidate the provider completely to force a fresh fetch
       if (mounted) {
         ref.invalidate(getEventsProvider);
+        // Refresh drink tickets — they may have been generated by the backend
+        ref.read(purchasedDrinkTicket.notifier).refreshTickets();
       }
-
       if (!mounted) return;
 
-      // Stop loading just before showing dialog
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
 
-      // Show success dialog
-      await showCustomAlertDialog(
-          context: context,
-          title: "Ticket Purchased",
-          message: "Your ticket has been sucessfully"
-              " purchased for the event ${widget.summary.event?.name}",
-          onConfirm: () {
-            // Close the dialog
-            Navigator.of(context).pop();
-          });
+      await _showBrutalSuccessDialog(
+        context: context,
+        eventName: widget.summary.event?.name ?? '',
+      );
 
       if (!mounted) return;
-
-      // After dialog is closed, clear navigation stack and go to tickets
-      // Pop all screens: order summary, ticket buying, event detail
       while (context.canPop()) {
         context.pop();
       }
-
-      // Now navigate to tickets from home
       if (!mounted) return;
       context.push(Routes.tickets);
     } else {
@@ -490,59 +425,46 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
         title: "Failed to purchase",
         message: "We couldn't process your request. Please try again.",
         confirmText: "OK",
-        onConfirm: () {
-          context.pop();
-        },
+        onConfirm: () => context.pop(),
       );
     }
   }
 
   Future<void> payAtTheDoor() async {
-    // Calculate which female attendees are guestlist vs paid
     final totalGuestlistCapacity = widget.summary.event?.gustlist ?? 0;
     final registeredGuestlist = widget.summary.event?.registeredGuestlist ?? 0;
     final initialAvailableGuestlist = totalGuestlistCapacity - registeredGuestlist;
     final currentAvailableGuestlist = widget.summary.availableGuestlist;
-    final guestlistSpotsUsedByThisUser = initialAvailableGuestlist - currentAvailableGuestlist;
+    final guestlistSpotsUsedByThisUser =
+        initialAvailableGuestlist - currentAvailableGuestlist;
 
-    // Split female attendees into guestlist and paid
     final guestlistFemaleCount = guestlistSpotsUsedByThisUser;
-    final paidFemaleCount = widget.summary.femaleTicketCount - guestlistSpotsUsedByThisUser;
+    final paidFemaleCount =
+        widget.summary.femaleTicketCount - guestlistSpotsUsedByThisUser;
 
     final guestlistFemaleAttendees = guestlistFemaleCount > 0
         ? widget.summary.femaleAttendee.take(guestlistFemaleCount).toList()
         : <String>[];
-
     final paidFemaleAttendees = paidFemaleCount > 0
         ? widget.summary.femaleAttendee.skip(guestlistFemaleCount).toList()
         : <String>[];
 
     debugPrint('=== PAY AT DOOR DEBUG ===');
-    debugPrint('Total guestlist capacity: $totalGuestlistCapacity');
-    debugPrint('Registered guestlist: $registeredGuestlist');
-    debugPrint('Initial available guestlist: $initialAvailableGuestlist');
-    debugPrint('Current available guestlist: $currentAvailableGuestlist');
-    debugPrint('Guestlist spots used by this user: $guestlistSpotsUsedByThisUser');
     debugPrint('Guestlist female count: $guestlistFemaleCount');
-    debugPrint('Guestlist female attendees: $guestlistFemaleAttendees');
     debugPrint('Paid female count: $paidFemaleCount');
-    debugPrint('Paid female attendees: $paidFemaleAttendees');
-    debugPrint('Male tickets: ${widget.summary.maleTicketCount}');
-    debugPrint('Male attendees: ${widget.summary.maleAttendee}');
-    debugPrint('Total price: ${widget.summary.totalPrice}');
     debugPrint('========================');
 
-    // Call add-to-guestlist for guestlist females
     ApiResult? guestlistResult;
     if (guestlistFemaleCount > 0) {
-      guestlistResult = await ref.read(ticketRepositoryProvider).addToGuestlist(
-            eventId: widget.summary.eventId ?? '',
-            femaleCount: guestlistFemaleCount,
-            maleCount: 0,
-            isGuestlist: true,
-            femaleList: guestlistFemaleAttendees,
-            maleList: [],
-          );
+      guestlistResult =
+          await ref.read(ticketRepositoryProvider).addToGuestlist(
+                eventId: widget.summary.eventId ?? '',
+                femaleCount: guestlistFemaleCount,
+                maleCount: 0,
+                isGuestlist: true,
+                femaleList: guestlistFemaleAttendees,
+                maleList: [],
+              );
 
       if (guestlistResult != ApiResult.success) {
         if (!mounted) return;
@@ -551,15 +473,12 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
           title: "Failed to add to guestlist",
           message: "We couldn't process your guestlist request. Please try again.",
           confirmText: "OK",
-          onConfirm: () {
-            context.pop();
-          },
+          onConfirm: () => context.pop(),
         );
         return;
       }
     }
 
-    // Call buy-ticket for paid females + all males (with payLater: true)
     ApiResult? buyResult;
     if (paidFemaleCount > 0 || widget.summary.maleTicketCount > 0) {
       buyResult = await ref.read(ticketRepositoryProvider).buyTicket(
@@ -569,7 +488,9 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
             payLater: true,
             femaleList: paidFemaleAttendees,
             maleList: widget.summary.maleAttendee,
-            skipGuestlist: guestlistFemaleCount > 0, // Skip guestlist if we already handled guestlist tickets
+            skipGuestlist: guestlistFemaleCount == 0,
+            freeFemaleDrinkTickets: widget.summary.event?.freeFemaleDrinkTicket ?? 0,
+            freeMaleDrinkTickets: widget.summary.event?.freeMaleDrinkTicket ?? 0,
           );
 
       if (buyResult != ApiResult.success) {
@@ -579,9 +500,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
           title: "Failed to purchase",
           message: "We couldn't process your request. Please try again.",
           confirmText: "OK",
-          onConfirm: () {
-            context.pop();
-          },
+          onConfirm: () => context.pop(),
         );
         return;
       }
@@ -589,47 +508,30 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
 
     if (!mounted) return;
 
-    final result = (guestlistResult == ApiResult.success || guestlistFemaleCount == 0) &&
-                   (buyResult == ApiResult.success || (paidFemaleCount == 0 && widget.summary.maleTicketCount == 0));
+    final result =
+        (guestlistResult == ApiResult.success || guestlistFemaleCount == 0) &&
+            (buyResult == ApiResult.success ||
+                (paidFemaleCount == 0 && widget.summary.maleTicketCount == 0));
 
     if (result) {
-      // Keep loading while backend processes
-      // Force refresh events cache to update guestlist counts
-      // Wait for the backend to complete the database update
       await Future.delayed(const Duration(milliseconds: 1500));
-
-      // Invalidate the provider completely to force a fresh fetch
       if (mounted) {
         ref.invalidate(getEventsProvider);
+        ref.read(purchasedDrinkTicket.notifier).refreshTickets();
       }
-
       if (!mounted) return;
 
-      // Stop loading just before showing dialog
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
 
-      // Show success dialog
-      await showCustomAlertDialog(
-          context: context,
-          title: "Ticket Purchased",
-          message: "Your ticket has been sucessfully"
-              " purchased for the event ${widget.summary.event?.name}",
-          onConfirm: () {
-            // Close the dialog
-            Navigator.of(context).pop();
-          });
+      await _showBrutalSuccessDialog(
+        context: context,
+        eventName: widget.summary.event?.name ?? '',
+      );
 
       if (!mounted) return;
-
-      // After dialog is closed, clear navigation stack and go to tickets
-      // Pop all screens: order summary, ticket buying, event detail
       while (context.canPop()) {
         context.pop();
       }
-
-      // Now navigate to tickets from home
       if (!mounted) return;
       context.push(Routes.tickets);
     } else {
@@ -638,9 +540,7 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
         title: "Failed to purchase",
         message: "We couldn't process your request. Please try again.",
         confirmText: "OK",
-        onConfirm: () {
-          context.pop();
-        },
+        onConfirm: () => context.pop(),
       );
     }
   }
@@ -648,12 +548,9 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
   @override
   void initState() {
     super.initState();
-    // For free tickets, set a dummy payment method to skip selection
     if (widget.summary.totalPrice == 0) {
-      selectedPaymentMethod = PaymentMethod.card; // Dummy value, will use buyNow() with payLater: false
-      // Don't fetch cards for free tickets - no payment needed
+      selectedPaymentMethod = PaymentMethod.card;
     } else {
-      // Only fetch saved cards for paid tickets
       if (widget.summary.ticketState == TicketState.payAtTheDoor &&
           widget.summary.event?.payAtTheDoor == true) {
         selectedPaymentMethod = PaymentMethod.payAtDoor;
@@ -667,558 +564,214 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
     return Stack(
       children: [
         Scaffold(
-          resizeToAvoidBottomInset: true,
+          backgroundColor: Brutal.bg,
+          appBar: AppBar(
+            backgroundColor: Brutal.bg,
+            elevation: 0,
+            leading: const AppBackButton(forAppBar: true),
+            title: Text('Order Summary',
+                style: Brutal.display(size: 20, color: Brutal.paper)),
+          ),
           body: Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
-            child: Column(
-              children: [
-              Stack(children: [
-                Image.asset('assets/images/banner/summary.png'),
-                Positioned(
-                  top: 50,
-                  left: 12,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha:0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.black,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ]),
-
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: ColorPallete.cardColor.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1.5,
-                        ),
-                      ),
-                      width: MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Ticket Count Section ───────────────────────────────
+                      _BrutalSectionCard(
+                        label: 'Tickets',
+                        icon: Icons.confirmation_number_outlined,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            TextRow(
-                              leading: 'Female tickets',
+                            _BrutalRow(
+                              leading: 'Female Tickets',
                               trailing: '${widget.summary.femaleTicketCount}',
+                              trailingColor: Brutal.magenta,
                             ),
-                            const SizedBox(
-                              height: 8,
-                            ),
-                            TextRow(
-                              leading: 'Male tickets',
+                            const SizedBox(height: 10),
+                            Container(
+                                height: 1, color: Brutal.hairlineColor),
+                            const SizedBox(height: 10),
+                            _BrutalRow(
+                              leading: 'Male Tickets',
                               trailing: '${widget.summary.maleTicketCount}',
-                            ),
-                            const SizedBox(
-                              height: 16,
-                            ),
-                            const DashedLine(
-                                gapWidth: 0,
-                                strokeWidth: 0.2,
-                                color: Colors.white30),
-                            const SizedBox(
-                              height: 16,
-                            ),
-                            // Show tax breakdown if tax is present
-                            Builder(
-                              builder: (context) {
-                                final isServiceTaxIncluded = widget.summary.event?.isServiceTaxIncluded ?? false;
-
-                                if (widget.summary.totalPrice == 0) {
-                                  // Free ticket - show only total price
-                                  return Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Total price',
-                                        style: TextStyle(color: Colors.white, fontSize: 16),
-                                      ),
-                                      Text(
-                                        'FREE',
-                                        style: TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }
-
-                                // Fixed 10% tax rate
-                                const taxPercentage = 10;
-                                const taxRate = 0.10;
-
-                                final double subtotal;
-                                final double taxAmount;
-                                final double total;
-
-                                if (isServiceTaxIncluded) {
-                                  // INCLUSIVE TAX: total already includes tax
-                                  // Example: ¥1000 total (includes ¥91 tax)
-                                  total = widget.summary.totalPrice;
-                                  subtotal = total / (1 + taxRate);
-                                  taxAmount = total - subtotal;
-                                } else {
-                                  // EXCLUSIVE TAX: ticket price + tax = total
-                                  // Example: ¥1000 + 10% = ¥1100
-                                  subtotal = widget.summary.totalPrice;
-                                  taxAmount = subtotal * taxRate;
-                                  total = subtotal + taxAmount;
-                                }
-
-                                return Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Subtotal',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        Text(
-                                          '¥${subtotal.toStringAsFixed(0)}',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Tax ($taxPercentage%)',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        Text(
-                                          '¥${taxAmount.toStringAsFixed(0)}',
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const DashedLine(
-                                        gapWidth: 0,
-                                        strokeWidth: 0.2,
-                                        color: Colors.white30),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          'Total price',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          '¥${total.toStringAsFixed(0)}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
+                              trailingColor: Brutal.cyan,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              ),
+                      const SizedBox(height: 16),
 
-              // Attendee Names Section
-              if (widget.summary.femaleAttendee.isNotEmpty || widget.summary.maleAttendee.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: ColorPallete.cardColor.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 1.5,
-                          ),
-                        ),
-                        width: MediaQuery.of(context).size.width,
-                        child: Padding(
-                          padding: const EdgeInsets.all(18),
+                      // ── Price Breakdown ────────────────────────────────────
+                      _BrutalSectionCard(
+                        label: 'Price',
+                        icon: Icons.receipt_long_outlined,
+                        child: _buildPriceBreakdown(),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Attendee Names ─────────────────────────────────────
+                      if (widget.summary.femaleAttendee.isNotEmpty ||
+                          widget.summary.maleAttendee.isNotEmpty) ...[
+                        _BrutalSectionCard(
+                          label: 'Attendees',
+                          icon: Icons.people_outline,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: ColorPallete.brightPink.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.people_outline,
-                                      color: ColorPallete.brightPink,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Attendee Information',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Female Attendees
                               if (widget.summary.femaleAttendee.isNotEmpty) ...[
                                 Row(
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.pink.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        'Female (${widget.summary.femaleAttendee.length})',
-                                        style: TextStyle(
-                                          color: Colors.pink.shade300,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                    const Icon(Icons.female,
+                                        size: 14, color: Brutal.magenta),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Female (${widget.summary.femaleAttendee.length})',
+                                      style: Brutal.label(
+                                          size: 10, color: Brutal.magenta),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                ...widget.summary.femaleAttendee.asMap().entries.map((entry) {
-                                  final index = entry.key;
-                                  final name = entry.value;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white54,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            name.trim().isEmpty ? 'Attendee ${index + 1}' : name,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 15,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                if (widget.summary.maleAttendee.isNotEmpty) const SizedBox(height: 16),
+                                ...widget.summary.femaleAttendee
+                                    .asMap()
+                                    .entries
+                                    .map((e) => _AttendeeRow(
+                                          name: e.value,
+                                          index: e.key,
+                                          color: Brutal.magenta,
+                                        )),
+                                if (widget.summary.maleAttendee.isNotEmpty)
+                                  const SizedBox(height: 14),
                               ],
-
-                              // Male Attendees
                               if (widget.summary.maleAttendee.isNotEmpty) ...[
                                 Row(
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        'Male (${widget.summary.maleAttendee.length})',
-                                        style: TextStyle(
-                                          color: Colors.blue.shade300,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                    const Icon(Icons.male,
+                                        size: 14, color: Brutal.cyan),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Male (${widget.summary.maleAttendee.length})',
+                                      style: Brutal.label(
+                                          size: 10, color: Brutal.cyan),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                ...widget.summary.maleAttendee.asMap().entries.map((entry) {
-                                  final index = entry.key;
-                                  final name = entry.value;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white54,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            name.trim().isEmpty ? 'Attendee ${index + 1}' : name,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 15,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
+                                ...widget.summary.maleAttendee
+                                    .asMap()
+                                    .entries
+                                    .map((e) => _AttendeeRow(
+                                          name: e.value,
+                                          index: e.key,
+                                          color: Brutal.cyan,
+                                        )),
                               ],
                             ],
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
+                        const SizedBox(height: 16),
+                      ],
 
-              // Spacing between attendee names and payment section
-              if (widget.summary.femaleAttendee.isNotEmpty || widget.summary.maleAttendee.isNotEmpty)
-                const SizedBox(height: 16),
-
-              // Only show payment method selector for paid tickets
-              if (widget.summary.totalPrice > 0) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      'Payment Method',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              if (widget.summary.totalPrice > 0)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: GestureDetector(
-                    onTap: loading ? null : _showPaymentMethodSelector,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: ColorPallete.cardColor.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Padding(
+                      // ── Payment Method ─────────────────────────────────────
+                      if (widget.summary.totalPrice > 0) ...[
+                        Text('Payment Method',
+                            style: Brutal.label(size: 11, color: Brutal.mute)),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: loading ? null : _showPaymentMethodSelector,
+                          child: Container(
                             padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Brutal.elevated,
+                              border: Border.all(color: Brutal.magenta, width: 1),
+                            ),
                             child: Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: ColorPallete.brightPink.withValues(alpha:0.2),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+                                  color: Brutal.magenta.withValues(alpha: 0.15),
                                   child: Icon(
-                                    selectedPaymentMethod == PaymentMethod.card && cards.isNotEmpty
-                                        ? Icons.credit_card
-                                        : selectedPaymentMethod == PaymentMethod.applePay
-                                            ? CupertinoIcons.creditcard
-                                            : selectedPaymentMethod == PaymentMethod.googlePay
-                                                ? Icons.payment
-                                                : selectedPaymentMethod == PaymentMethod.payAtDoor
-                                                    ? Icons.payments_outlined
-                                                    : Icons.account_balance_wallet_outlined,
-                                    color: ColorPallete.brightPink,
-                                    size: 24,
+                                    _paymentIcon(),
+                                    color: Brutal.magenta,
+                                    size: 22,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       Text(
-                                        selectedPaymentMethod == PaymentMethod.card &&
-                                                cards.isNotEmpty
-                                            ? '${cards[selectedCardIndex].brand}'
-                                            : selectedPaymentMethod == PaymentMethod.applePay
-                                                ? 'Apple Pay'
-                                                : selectedPaymentMethod == PaymentMethod.googlePay
-                                                    ? 'Google Pay'
-                                                    : selectedPaymentMethod == PaymentMethod.payAtDoor
-                                                        ? 'Pay at Door'
-                                                        : 'Select Payment',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-
-                                          fontWeight: FontWeight.w600,
-                                        ),
-
+                                        _paymentTitle(),
+                                        style: Brutal.body(
+                                            size: 15, color: Brutal.paper),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        selectedPaymentMethod == PaymentMethod.card &&
-                                                cards.isNotEmpty
-                                            ? '•••• ${cards[selectedCardIndex].last4}'
-                                            : selectedPaymentMethod == PaymentMethod.applePay
-                                                ? 'Pay with Touch ID, Face ID, or Passcode'
-                                                : selectedPaymentMethod == PaymentMethod.googlePay
-                                                    ? 'Pay with your Google account'
-                                                    : selectedPaymentMethod == PaymentMethod.payAtDoor
-                                                        ? 'Cash or card at venue'
-                                                        : 'Choose your payment method',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(alpha:0.6),
-                                          fontSize: 14,
+                                      if (_paymentSubtitle().isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _paymentSubtitle(),
+                                          style: Brutal.body(
+                                              size: 12, color: Brutal.mute),
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.white.withValues(alpha:0.6),
-                                  size: 16,
-                                ),
+                                const Icon(Icons.chevron_right,
+                                    color: Brutal.mute, size: 20),
                               ],
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                        const SizedBox(height: 16),
+                      ],
+                    ],
                   ),
                 ),
-              // Add some bottom padding to ensure content is not cut off
-              const SizedBox(height: 16),
-              ],
-            ),
-                ),
               ),
-              // Button at the bottom that moves with keyboard
+
+              // ── CTA Button ─────────────────────────────────────────────────
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  16,
-                  0,
-                  16,
-                  8 + MediaQuery.of(context).padding.bottom,
-                ),
+                    20, 0, 20, 12 + MediaQuery.of(context).padding.bottom),
                 child: AppButton.primary(
                   text: selectedPaymentMethod == PaymentMethod.payAtDoor
-                      ? 'Pay at the door'
+                      ? 'Pay at the Door'
                       : widget.summary.totalPrice == 0
                           ? 'Get Free Ticket'
-                          : 'Buy now ¥${widget.summary.totalPriceWithTax.toStringAsFixed(0)}',
+                          : 'Buy Now  ¥${widget.summary.totalPriceWithTax.toStringAsFixed(0)}',
                   onPressed: () async {
                     if (selectedPaymentMethod == null) {
                       _showPaymentMethodSelector();
                       return;
                     }
-                    setState(() {
-                      loading = true;
-                    });
+                    setState(() => loading = true);
 
-                    // IMPORTANT: If tickets are free, always use buyNow() with payLater: false
-                    // This ensures guestlist logic works correctly on the backend
                     if (widget.summary.totalPrice == 0) {
                       await buyNow();
                       return;
                     }
 
-                    // For paid tickets, check payment method
                     if (selectedPaymentMethod == PaymentMethod.payAtDoor &&
                         widget.summary.event?.payAtTheDoor == true) {
                       await payAtTheDoor();
                     } else if (selectedPaymentMethod == PaymentMethod.card ||
-                               selectedPaymentMethod == PaymentMethod.applePay ||
-                               selectedPaymentMethod == PaymentMethod.googlePay) {
-                      setState(() {
-                        loading = true;
-                      });
+                        selectedPaymentMethod == PaymentMethod.applePay ||
+                        selectedPaymentMethod == PaymentMethod.googlePay) {
                       try {
-                        final res = await StripePaymentHandler().stripeMakePayment(
-                          widget.summary.totalPriceWithTax,
-                        );
-                        if (res == PurchaseStatus.success) {
-                          await buyNow();
-                        }
+                        final res = await StripePaymentHandler()
+                            .stripeMakePayment(widget.summary.totalPriceWithTax);
+                        if (res == PurchaseStatus.success) await buyNow();
                       } catch (exception) {
                         if (context.mounted) {
                           context.showSnackbar(message: exception.toString());
                         }
                       } finally {
-                        setState(() {
-                          loading = false;
-                        });
+                        setState(() => loading = false);
                       }
                     }
                   },
@@ -1228,136 +781,329 @@ class _OrderSummaryPageState extends ConsumerState<OrderSummaryPage> {
           ),
         ),
         if (loading)
-          const Center(
-            child: CircularProgressIndicator(),
+          Container(
+            color: Brutal.bg.withValues(alpha: 0.7),
+            child: const Center(
+              child: CircularProgressIndicator(color: Brutal.magenta),
+            ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildPriceBreakdown() {
+    final isServiceTaxIncluded =
+        widget.summary.event?.isServiceTaxIncluded ?? false;
+
+    if (widget.summary.totalPrice == 0) {
+      return const _BrutalRow(
+        leading: 'Total Price',
+        trailing: 'FREE',
+        trailingColor: Brutal.yellow,
+        trailingBold: true,
+      );
+    }
+
+    const taxRate = 0.10;
+    const taxPercentage = 10;
+    final double subtotal;
+    final double taxAmount;
+    final double total;
+
+    if (isServiceTaxIncluded) {
+      total = widget.summary.totalPrice;
+      subtotal = total / (1 + taxRate);
+      taxAmount = total - subtotal;
+    } else {
+      subtotal = widget.summary.totalPrice;
+      taxAmount = subtotal * taxRate;
+      total = subtotal + taxAmount;
+    }
+
+    return Column(
+      children: [
+        _BrutalRow(
+          leading: 'Subtotal',
+          trailing: '¥${subtotal.toStringAsFixed(0)}',
+        ),
+        const SizedBox(height: 8),
+        _BrutalRow(
+          leading: 'Tax ($taxPercentage%)',
+          trailing: '¥${taxAmount.toStringAsFixed(0)}',
+        ),
+        const SizedBox(height: 12),
+        Container(height: 1, color: Brutal.hairlineColor),
+        const SizedBox(height: 12),
+        _BrutalRow(
+          leading: 'Total Price',
+          trailing: '¥${total.toStringAsFixed(0)}',
+          trailingColor: Brutal.paper,
+          trailingBold: true,
+        ),
+      ],
+    );
+  }
+
+  IconData _paymentIcon() {
+    if (selectedPaymentMethod == PaymentMethod.card && cards.isNotEmpty) {
+      return Icons.credit_card;
+    } else if (selectedPaymentMethod == PaymentMethod.applePay) {
+      return CupertinoIcons.creditcard;
+    } else if (selectedPaymentMethod == PaymentMethod.googlePay) {
+      return Icons.payment;
+    } else if (selectedPaymentMethod == PaymentMethod.payAtDoor) {
+      return Icons.payments_outlined;
+    }
+    return Icons.account_balance_wallet_outlined;
+  }
+
+  String _paymentTitle() {
+    if (selectedPaymentMethod == PaymentMethod.card && cards.isNotEmpty) {
+      return cards[selectedCardIndex].brand;
+    } else if (selectedPaymentMethod == PaymentMethod.applePay) {
+      return 'Apple Pay';
+    } else if (selectedPaymentMethod == PaymentMethod.googlePay) {
+      return 'Google Pay';
+    } else if (selectedPaymentMethod == PaymentMethod.payAtDoor) {
+      return 'Pay at Door';
+    }
+    return 'Select Payment';
+  }
+
+  String _paymentSubtitle() {
+    if (selectedPaymentMethod == PaymentMethod.card && cards.isNotEmpty) {
+      return '•••• ${cards[selectedCardIndex].last4}';
+    } else if (selectedPaymentMethod == PaymentMethod.applePay) {
+      return 'Touch ID / Face ID / Passcode';
+    } else if (selectedPaymentMethod == PaymentMethod.googlePay) {
+      return 'Pay with your Google account';
+    } else if (selectedPaymentMethod == PaymentMethod.payAtDoor) {
+      return 'Cash or card at venue';
+    }
+    return 'Choose your payment method';
+  }
+}
+
+// ── Success popup ─────────────────────────────────────────────────────────────
+
+Future<void> _showBrutalSuccessDialog({
+  required BuildContext context,
+  required String eventName,
+}) async {
+  await showDialog(
+    context: context,
+    barrierColor: Brutal.bg.withValues(alpha: 0.85),
+    builder: (ctx) => Dialog(
+      backgroundColor: Brutal.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Brutal.yellow.withValues(alpha: 0.12),
+              child: const Icon(Icons.check, color: Brutal.yellow, size: 36),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Ticket Purchased',
+              style: Brutal.display(size: 24, color: Brutal.paper),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'You\'re going to $eventName',
+              style: Brutal.body(size: 16, color: Brutal.dim),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  color: Brutal.magenta,
+                  alignment: Alignment.center,
+                  child: Text(
+                    'View Tickets',
+                    style: Brutal.label(size: 13, color: Brutal.paper),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// ── Reusable Brutal UI components ─────────────────────────────────────────────
+
+class _BrutalSectionCard extends StatelessWidget {
+  const _BrutalSectionCard({
+    required this.label,
+    required this.icon,
+    required this.child,
+  });
+
+  final String label;
+  final IconData icon;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Brutal.elevated,
+        border: Border.all(color: Brutal.hairlineColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 2, height: 16, color: Brutal.magenta),
+              const SizedBox(width: 8),
+              Icon(icon, size: 14, color: Brutal.magenta),
+              const SizedBox(width: 6),
+              Text(label, style: Brutal.display(size: 16, color: Brutal.paper)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _BrutalRow extends StatelessWidget {
+  const _BrutalRow({
+    required this.leading,
+    required this.trailing,
+    this.trailingColor,
+    this.trailingBold = false,
+  });
+
+  final String leading;
+  final String trailing;
+  final Color? trailingColor;
+  final bool trailingBold;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(leading, style: Brutal.body(size: 16, color: Brutal.dim)),
+        Text(
+          trailing,
+          style: trailingBold
+              ? Brutal.display(size: 16, color: trailingColor ?? Brutal.paper)
+              : Brutal.body(size: 16, color: trailingColor ?? Brutal.dim),
+        ),
       ],
     );
   }
 }
 
-class TextRow extends StatelessWidget {
-  const TextRow({super.key, required this.leading, required this.trailing});
+class _AttendeeRow extends StatelessWidget {
+  const _AttendeeRow({
+    required this.name,
+    required this.index,
+    required this.color,
+  });
 
-  final String leading;
-  final String trailing;
+  final String name;
+  final int index;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    const textStyle = TextStyle(color: Colors.white, fontSize: 16);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          leading,
-          style: textStyle,
-        ),
-        Text(
-          trailing,
-          style: textStyle,
-        )
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Container(width: 4, height: 4, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              name.trim().isEmpty ? 'Attendee ${index + 1}' : name,
+              style: Brutal.body(size: 16, color: Brutal.paper),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 enum PaymentMethod { card, applePay, googlePay, payAtDoor }
 
-class _PaymentMethodTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isCard;
-
-  const _PaymentMethodTile({
+class _BrutalPaymentTile extends StatelessWidget {
+  const _BrutalPaymentTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.isSelected,
+    required this.accentColor,
     required this.onTap,
-    this.isCard = false,
   });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final Color accentColor;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    ColorPallete.brightPink.withValues(alpha:0.2),
-                    ColorPallete.backgroundcolor2.withValues(alpha:0.2),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : ColorPallete.black25,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? accentColor.withValues(alpha: 0.08) : Brutal.elevated,
           border: Border.all(
-            color: isSelected ? ColorPallete.brightPink : Colors.transparent,
-            width: 2,
+            color: isSelected ? accentColor : Brutal.hairlineColor,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isCard
-                    ? Colors.white.withValues(alpha:0.1)
-                    : ColorPallete.brightPink.withValues(alpha:0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: isCard ? Colors.white : ColorPallete.brightPink,
-                size: 20,
-              ),
+              color: accentColor.withValues(alpha: 0.12),
+              child: Icon(icon, color: accentColor, size: 18),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(title, style: Brutal.body(size: 16, color: Brutal.paper)),
                   if (subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha:0.6),
-                        fontSize: 14,
-                      ),
-                    ),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: Brutal.body(size: 14, color: Brutal.mute)),
                   ],
                 ],
               ),
             ),
             if (isSelected)
               Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: ColorPallete.brightPink,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                padding: const EdgeInsets.all(3),
+                color: accentColor,
+                child: const Icon(Icons.check, color: Brutal.bg, size: 14),
               ),
           ],
         ),
