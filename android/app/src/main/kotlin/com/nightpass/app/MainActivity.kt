@@ -1,4 +1,4 @@
-package company.clubship.clubship_app
+package com.nightpass.app
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterFragmentActivity
